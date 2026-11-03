@@ -230,6 +230,26 @@ alter publication supabase_realtime add table public.events;
 alter publication supabase_realtime add table public.event_rsvps;
 alter publication supabase_realtime add table public.map_spots;
 
+-- ---------- Grants (RLS allein gewährt keinen Zugriff) ----------
+grant select, insert, update, delete on public.profiles to authenticated;
+grant select, insert, update, delete on public.projects to authenticated;
+grant select, insert, update, delete on public.project_members to authenticated;
+grant select, insert, update, delete on public.areas to authenticated;
+grant select, insert, update, delete on public.area_moderators to authenticated;
+grant select, insert, update, delete on public.area_subscriptions to authenticated;
+grant select, insert, update, delete on public.forums to authenticated;
+grant select, insert, update, delete on public.posts to authenticated;
+grant select, insert, update, delete on public.chat_channels to authenticated;
+grant select, insert, update, delete on public.messages to authenticated;
+grant select, insert, update, delete on public.channel_mutes to authenticated;
+grant select, insert, update, delete on public.events to authenticated;
+grant select, insert, update, delete on public.event_invites to authenticated;
+grant select, insert, update, delete on public.event_rsvps to authenticated;
+grant select, insert, update, delete on public.event_comments to authenticated;
+grant select, insert, update, delete on public.map_spots to authenticated;
+grant select, insert, update, delete on public.surveys to authenticated;
+grant select, insert, update, delete on public.survey_votes to authenticated;
+
 -- ---------- Row Level Security ----------
 alter table public.profiles enable row level security;
 alter table public.projects enable row level security;
