@@ -7,6 +7,12 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
+    }
+}
+
 kotlin {
     androidTarget {
         compilerOptions {
