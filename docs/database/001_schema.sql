@@ -158,7 +158,7 @@ create table if not exists public.event_invites (
     user_id uuid references public.profiles(id) on delete cascade,
     area_id uuid references public.areas(id) on delete cascade,
     check (user_id is not null or area_id is not null),
-    primary key (event_id, coalesce(user_id,'00000000-0000-0000-0000-000000000000'), coalesce(area_id,'00000000-0000-0000-0000-000000000000'))
+    unique (event_id, user_id, area_id)
 );
 
 create table if not exists public.event_rsvps (
