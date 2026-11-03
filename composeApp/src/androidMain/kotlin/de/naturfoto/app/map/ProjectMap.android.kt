@@ -31,6 +31,7 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Polygon
 
+@Composable
 actual fun ProjectMap(modifier: Modifier) {
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(

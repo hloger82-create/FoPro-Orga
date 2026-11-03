@@ -1,6 +1,7 @@
 package de.naturfoto.app.auth
 
 import de.naturfoto.app.data.Supabase
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
