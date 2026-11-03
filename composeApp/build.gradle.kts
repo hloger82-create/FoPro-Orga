@@ -22,6 +22,7 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.materialIconsExtended)
             implementation(libs.androidx.navigation.compose)
+            implementation(libs.coil.compose)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.contentNegotiation)

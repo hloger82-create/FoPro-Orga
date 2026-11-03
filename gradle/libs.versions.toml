@@ -5,6 +5,7 @@ composeMultiplatform = "1.9.0"
 osmdroid = "6.1.20"
 ktor = "3.2.3"
 supabase = "3.2.4"
+coil = "3.3.0"
 androidxNavigation = "2.9.0-beta01"
 androidxLifecycle = "2.9.0-beta01"
 
@@ -18,6 +19,7 @@ supabase-auth = { module = "io.github.jan-tennert.supabase:auth-kt", version.ref
 supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt", version.ref = "supabase" }
 supabase-realtime = { module = "io.github.jan-tennert.supabase:realtime-kt", version.ref = "supabase" }
 supabase-storage = { module = "io.github.jan-tennert.supabase:storage-kt", version.ref = "supabase" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 androidx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "androidxNavigation" }
 androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidxLifecycle" }
 

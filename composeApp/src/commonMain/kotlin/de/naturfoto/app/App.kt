@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import de.naturfoto.app.auth.AuthRepository
 import de.naturfoto.app.auth.AuthScreen
 import de.naturfoto.app.map.ProjectMap
+import de.naturfoto.app.profile.ProfileScreen
 import de.naturfoto.app.theme.NaturfotoTheme
 
 private enum class Tab(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
@@ -33,6 +35,7 @@ private enum class Tab(val label: String, val icon: androidx.compose.ui.graphics
     CHAT("Chat", Icons.Default.ChatBubbleOutline),
     CALENDAR("Kalender", Icons.Default.CalendarMonth),
     MAP("Karte", Icons.Default.Map),
+    PROFILE("Profil", Icons.Default.Person),
 }
 
 @Composable
@@ -65,6 +68,7 @@ fun NaturfotoApp() {
                     Tab.CHAT -> PlaceholderScreen("Chat")
                     Tab.CALENDAR -> PlaceholderScreen("Kalender")
                     Tab.MAP -> ProjectMap(modifier = Modifier)
+                    Tab.PROFILE -> ProfileScreen(modifier = Modifier)
                 }
             }
         }
