@@ -101,6 +101,9 @@ fun ChatScreen(
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(8.dp)) }
 
         val listState = rememberLazyListState()
+        LaunchedEffect(messagesState.size) {
+            if (messagesState.isNotEmpty()) listState.animateScrollToItem(messagesState.size - 1)
+        }
         LazyColumn(
             state = listState,
             modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -118,9 +121,6 @@ fun ChatScreen(
                         Text(msg["created_at"].toString().take(16).replace('T', ' '), style = MaterialTheme.typography.labelSmall)
                     }
                 }
-            }
-            LaunchedEffect(messagesState.size) {
-                if (messagesState.isNotEmpty()) listState.animateScrollToItem(messagesState.size - 1)
             }
         }
 
