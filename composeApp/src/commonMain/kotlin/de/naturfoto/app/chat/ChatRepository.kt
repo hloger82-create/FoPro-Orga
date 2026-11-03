@@ -1,6 +1,7 @@
 package de.naturfoto.app.chat
 
 import de.naturfoto.app.data.Supabase
+import de.naturfoto.app.data.bool
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -15,15 +16,15 @@ class ChatRepository {
     private val db get() = Supabase.client.postgrest
     private val userId get() = Supabase.client.auth.currentUserOrNull()?.id
 
-    suspend fun listChannels(projectId: String): List<Map<String, Any?>> =
+    suspend fun listChannels(projectId: String): List<kotlinx.serialization.json.JsonObject> =
         db["chat_channels"].select { filter { eq("project_id", projectId) } }
-            .decodeList<Map<String, Any?>>()
+            .decodeList<kotlinx.serialization.json.JsonObject>()
 
-    suspend fun listMessages(channelId: String): List<Map<String, Any?>> =
+    suspend fun listMessages(channelId: String): List<kotlinx.serialization.json.JsonObject> =
         db["messages"].select {
             filter { eq("channel_id", channelId) }
             order("created_at", Order.ASCENDING)
-        }.decodeList<Map<String, Any?>>()
+        }.decodeList<kotlinx.serialization.json.JsonObject>()
 
     suspend fun sendMessage(channelId: String, body: String, imageUrl: String? = null) {
         db["messages"].insert(
@@ -52,11 +53,11 @@ class ChatRepository {
                 eq("channel_id", channelId)
                 eq("user_id", userId ?: "")
             }
-        }.decodeList<Map<String, Any?>>().firstOrNull()?.get("muted") as? Boolean ?: false
+        }.decodeList<kotlinx.serialization.json.JsonObject>().firstOrNull()?.bool("muted") ?: false
 
     suspend fun subscribeMessages(
         channelId: String,
-        flow: MutableStateFlow<List<Map<String, Any?>>>,
+        flow: MutableStateFlow<List<kotlinx.serialization.json.JsonObject>>,
     ): RealtimeChannel? {
         return try {
             val channel = Supabase.client.realtime.channel("messages:$channelId")

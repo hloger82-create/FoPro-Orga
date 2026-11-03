@@ -1,6 +1,7 @@
 package de.naturfoto.app.areas
 
 import de.naturfoto.app.data.Supabase
+import de.naturfoto.app.data.str
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -16,13 +17,13 @@ class AreasRepository {
     suspend fun firstProjectIdForUser(): String? {
         val uid = userId ?: return null
         val memberships = db["project_members"].select { filter { eq("user_id", uid) } }
-            .decodeList<Map<String, Any?>>()
-        return memberships.firstOrNull()?.get("project_id")?.toString()
+            .decodeList<kotlinx.serialization.json.JsonObject>()
+        return memberships.firstOrNull().str("project_id")
     }
 
-    suspend fun listAreas(projectId: String): List<Map<String, Any?>> =
+    suspend fun listAreas(projectId: String): List<kotlinx.serialization.json.JsonObject> =
         db["areas"].select { filter { eq("project_id", projectId) } }
-            .decodeList<Map<String, Any?>>()
+            .decodeList<kotlinx.serialization.json.JsonObject>()
 
     suspend fun createArea(projectId: String, name: String, description: String?) {
         db["areas"].insert(
@@ -34,9 +35,9 @@ class AreasRepository {
         )
     }
 
-    suspend fun listForums(areaId: String): List<Map<String, Any?>> =
+    suspend fun listForums(areaId: String): List<kotlinx.serialization.json.JsonObject> =
         db["forums"].select { filter { eq("area_id", areaId) } }
-            .decodeList<Map<String, Any?>>()
+            .decodeList<kotlinx.serialization.json.JsonObject>()
 
     suspend fun createForum(areaId: String, name: String) {
         db["forums"].insert(
@@ -48,13 +49,13 @@ class AreasRepository {
         )
     }
 
-    suspend fun listPosts(areaId: String, forumId: String?): List<Map<String, Any?>> =
+    suspend fun listPosts(areaId: String, forumId: String?): List<kotlinx.serialization.json.JsonObject> =
         db["posts"].select {
             filter { eq("area_id", areaId) }
             order("pinned", Order.DESCENDING)
             order("created_at", Order.DESCENDING)
-        }.decodeList<Map<String, Any?>>()
-            .filter { (it["forum_id"]?.toString() ?: "") == (forumId ?: "") }
+        }.decodeList<kotlinx.serialization.json.JsonObject>()
+            .filter { (it.str("forum_id")) == (forumId ?: "") }
 
     suspend fun createPost(areaId: String, forumId: String?, title: String, body: String, imageUrl: String? = null) {
         db["posts"].insert(

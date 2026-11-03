@@ -1,5 +1,8 @@
 package de.naturfoto.app.chat
 
+import de.naturfoto.app.data.bool
+import de.naturfoto.app.data.str
+import kotlinx.serialization.json.JsonObject
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,9 +46,9 @@ fun ChatScreen(
     val repo = remember { ChatRepository() }
     val scope = rememberCoroutineScope()
 
-    var channels by remember { mutableStateOf<List<Map<String, Any?>>>(emptyList()) }
-    var selected by remember { mutableStateOf<Map<String, Any?>?>(null) }
-    val messages = remember { MutableStateFlow<List<Map<String, Any?>>>(emptyList()) }
+    var channels by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var selected by remember { mutableStateOf<JsonObject?>(null) }
+    val messages = remember { MutableStateFlow<List<JsonObject>>(emptyList()) }
     val messagesState by messages.collectAsState()
     var muted by remember { mutableStateOf(false) }
     var input by remember { mutableStateOf("") }
@@ -54,12 +57,12 @@ fun ChatScreen(
     LaunchedEffect(projectId) {
         try {
             channels = repo.listChannels(projectId)
-            val general = channels.firstOrNull { it["is_general"] as? Boolean == true } ?: channels.firstOrNull()
+            val general = channels.firstOrNull { it.bool("is_general") } ?: channels.firstOrNull()
             if (general != null) {
                 selected = general
-                messages.value = repo.listMessages(general["id"].toString())
-                muted = repo.isMuted(general["id"].toString())
-                repo.subscribeMessages(general["id"].toString(), messages)
+                messages.value = repo.listMessages(general.str("id"))
+                muted = repo.isMuted(general.str("id"))
+                repo.subscribeMessages(general.str("id"), messages)
             }
         } catch (e: Exception) {
             error = e.message
@@ -74,14 +77,14 @@ fun ChatScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             channels.forEach { ch ->
-                val isSel = selected?.get("id") == ch["id"]
+                val isSel = selected?.str("id") == ch.str("id")
                 Card(
                     onClick = {
                         scope.launch {
                             selected = ch
-                            messages.value = repo.listMessages(ch["id"].toString())
-                            muted = repo.isMuted(ch["id"].toString())
-                            repo.subscribeMessages(ch["id"].toString(), messages)
+                            messages.value = repo.listMessages(ch.str("id"))
+                            muted = repo.isMuted(ch.str("id"))
+                            repo.subscribeMessages(ch.str("id"), messages)
                         }
                     },
                     shape = RoundedCornerShape(12.dp),
@@ -90,7 +93,7 @@ fun ChatScreen(
                     ),
                 ) {
                     Text(
-                        ch["name"].toString(),
+                        ch.str("name"),
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                         color = if (isSel) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -110,15 +113,15 @@ fun ChatScreen(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            items(messagesState, key = { it["id"].toString() }) { msg ->
+            items(messagesState, key = { it.str("id") }) { msg ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text(msg["body"].toString(), style = MaterialTheme.typography.bodyLarge)
-                        Text(msg["created_at"].toString().take(16).replace('T', ' '), style = MaterialTheme.typography.labelSmall)
+                        Text(msg.str("body"), style = MaterialTheme.typography.bodyLarge)
+                        Text(msg.str("created_at").take(16).replace('T', ' '), style = MaterialTheme.typography.labelSmall)
                     }
                 }
             }
@@ -135,7 +138,7 @@ fun ChatScreen(
                 IconButton(onClick = {
                     scope.launch {
                         val newMuted = !muted
-                        repo.setMuted(ch["id"].toString(), newMuted)
+                        repo.setMuted(ch.str("id"), newMuted)
                         muted = newMuted
                     }
                 }) {
@@ -160,8 +163,8 @@ fun ChatScreen(
                     input = ""
                     scope.launch {
                         try {
-                            repo.sendMessage(ch["id"].toString(), text)
-                            messages.value = repo.listMessages(ch["id"].toString())
+                            repo.sendMessage(ch.str("id"), text)
+                            messages.value = repo.listMessages(ch.str("id"))
                         } catch (e: Exception) {
                             error = e.message
                         }

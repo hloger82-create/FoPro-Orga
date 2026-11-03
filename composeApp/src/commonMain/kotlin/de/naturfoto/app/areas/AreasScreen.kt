@@ -1,5 +1,8 @@
 package de.naturfoto.app.areas
 
+import de.naturfoto.app.data.bool
+import de.naturfoto.app.data.str
+import kotlinx.serialization.json.JsonObject
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,7 +45,7 @@ fun AreasScreen(
     val repo = remember { AreasRepository() }
     val scope = rememberCoroutineScope()
 
-    var areas by remember { mutableStateOf<List<Map<String, Any?>>>(emptyList()) }
+    var areas by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var showCreate by remember { mutableStateOf(false) }
@@ -80,18 +83,18 @@ fun AreasScreen(
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                items(areas, key = { it["id"].toString() }) { area ->
+                items(areas, key = { it.str("id") }) { area ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onOpenArea(area["id"].toString(), area["name"].toString()) },
+                            .clickable { onOpenArea(area.str("id"), area.str("name")) },
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(area["name"].toString(), style = MaterialTheme.typography.titleMedium)
-                            area["description"]?.let {
-                                Text(it.toString(), style = MaterialTheme.typography.bodyMedium)
+                            Text(area.str("name"), style = MaterialTheme.typography.titleMedium)
+                            area.str("description").ifBlank { null }?.let {
+                                Text(it, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }

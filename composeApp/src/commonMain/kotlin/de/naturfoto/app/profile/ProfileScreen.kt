@@ -30,6 +30,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import de.naturfoto.app.data.Supabase
+import de.naturfoto.app.data.bool
+import de.naturfoto.app.data.obj
+import de.naturfoto.app.data.list
+import de.naturfoto.app.data.str
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
@@ -64,18 +70,18 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
         try {
             val row = Supabase.client.postgrest["profiles"]
                 .select { filter { eq("id", userId) } }
-                .decodeSingle<Map<String, Any?>>()
-            username = row["username"] as? String ?: ""
-            displayName = row["display_name"] as? String ?: ""
-            bio = row["bio"] as? String ?: ""
-            avatarUrl = row["avatar_url"] as? String ?: ""
-            homepage = row["homepage"] as? String ?: ""
-            socials = (row["socials"] as? Map<*, *>)?.entries
-                ?.joinToString(", ") { "${it.key}=${it.value}" } ?: ""
-            skillTags = ((row["skill_tags"] as? List<*>)?.joinToString(", ") { it.toString() }) ?: ""
-            showHomepagePublicly = row["show_homepage_publicly"] as? Boolean ?: false
-            showSocialsPublicly = row["show_socials_publicly"] as? Boolean ?: false
-            ebirdEnabled = row["ebird_enabled"] as? Boolean ?: false
+                .decodeSingle<JsonObject>()
+            username = row.str("username")
+            displayName = row.str("display_name")
+            bio = row.str("bio")
+            avatarUrl = row.str("avatar_url")
+            homepage = row.str("homepage")
+            socials = row.obj("socials").entries
+                .joinToString(", ") { "${it.key}=${it.value.jsonPrimitive.contentOrNull}" }
+            skillTags = row.list("skill_tags").joinToString(", ")
+            showHomepagePublicly = row.bool("show_homepage_publicly")
+            showSocialsPublicly = row.bool("show_socials_publicly")
+            ebirdEnabled = row.bool("ebird_enabled")
         } catch (e: Exception) {
             error = e.message ?: "Profil konnte nicht geladen werden"
         } finally {

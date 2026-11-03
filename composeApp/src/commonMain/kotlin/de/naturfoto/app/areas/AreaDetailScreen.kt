@@ -1,5 +1,8 @@
 package de.naturfoto.app.areas
 
+import de.naturfoto.app.data.bool
+import de.naturfoto.app.data.str
+import kotlinx.serialization.json.JsonObject
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,8 +48,8 @@ fun AreaDetailScreen(
     val scope = rememberCoroutineScope()
 
     var tab by remember { mutableStateOf(0) } // 0 = Pinnwand, 1 = Foren
-    var forums by remember { mutableStateOf<List<Map<String, Any?>>>(emptyList()) }
-    var posts by remember { mutableStateOf<List<Map<String, Any?>>>(emptyList()) }
+    var forums by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var posts by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var selectedForum by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var showNewForum by remember { mutableStateOf(false) }
@@ -168,13 +171,13 @@ fun AreaDetailScreen(
 }
 
 @Composable
-private fun PostList(posts: List<Map<String, Any?>>, onDelete: (String) -> Unit) {
+private fun PostList(posts: List<JsonObject>, onDelete: (String) -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(posts, key = { it["id"].toString() }) { post ->
+        items(posts, key = { it.str("id") }) { post ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -182,11 +185,11 @@ private fun PostList(posts: List<Map<String, Any?>>, onDelete: (String) -> Unit)
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(post["title"].toString(), style = MaterialTheme.typography.titleMedium)
-                        if (post["pinned"] as? Boolean == true) Text("📌", style = MaterialTheme.typography.bodyMedium)
+                        Text(post.str("title"), style = MaterialTheme.typography.titleMedium)
+                        if (post.bool("pinned")) Text("📌", style = MaterialTheme.typography.bodyMedium)
                     }
-                    post["body"]?.toString()?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                    TextButton(onClick = { onDelete(post["id"].toString()) }) { Text("Löschen") }
+                    post.str("body").let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                    TextButton(onClick = { onDelete(post.str("id")) }) { Text("Löschen") }
                 }
             }
         }
@@ -195,7 +198,7 @@ private fun PostList(posts: List<Map<String, Any?>>, onDelete: (String) -> Unit)
 
 @Composable
 private fun ForumList(
-    forums: List<Map<String, Any?>>,
+    forums: List<JsonObject>,
     selectedForum: String?,
     onSelectForum: (String) -> Unit,
 ) {
@@ -204,14 +207,14 @@ private fun ForumList(
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(forums, key = { it["id"].toString() }) { forum ->
+        items(forums, key = { it.str("id") }) { forum ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                onClick = { onSelectForum(forum["id"].toString()) },
+                onClick = { onSelectForum(forum.str("id")) },
             ) {
-                Text(forum["name"].toString(), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp))
+                Text(forum.str("name"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp))
             }
         }
     }
