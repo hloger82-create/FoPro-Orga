@@ -67,6 +67,18 @@ drop trigger if exists on_project_created on public.projects;
 create trigger on_project_created after insert on public.projects
     for each row execute function public.handle_new_project();
 
+-- Allgemeiner Chat-Kanal pro Projekt
+create or replace function public.handle_new_project_channel()
+returns trigger language plpgsql security definer as $$
+begin
+    insert into public.chat_channels (project_id, name, is_general)
+    values (new.id, 'Allgemein', true);
+    return new;
+end; $$;
+drop trigger if exists on_project_channel_created on public.projects;
+create trigger on_project_channel_created after insert on public.projects
+    for each row execute function public.handle_new_project_channel();
+
 -- ---------- Areas, Foren, Pinnwand ----------
 create table if not exists public.areas (
     id uuid primary key default uuid_generate_v4(),

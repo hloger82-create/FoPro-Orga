@@ -28,6 +28,7 @@ import de.naturfoto.app.areas.AreaDetailScreen
 import de.naturfoto.app.areas.AreasRepository
 import de.naturfoto.app.areas.AreasScreen
 import de.naturfoto.app.auth.AuthRepository
+import de.naturfoto.app.chat.ChatScreen
 import de.naturfoto.app.auth.AuthScreen
 import de.naturfoto.app.map.ProjectMap
 import de.naturfoto.app.profile.ProfileScreen
@@ -91,7 +92,10 @@ fun NaturfotoApp() {
                             PlaceholderScreen("Projekt wird geladen…")
                         }
                     }
-                    Tab.CHAT -> PlaceholderScreen("Chat")
+                    Tab.CHAT -> {
+                        val pid = projectId
+                        if (pid != null) ChatScreen(projectId = pid) else PlaceholderScreen("Projekt wird geladen…")
+                    }
                     Tab.CALENDAR -> PlaceholderScreen("Kalender")
                     Tab.MAP -> ProjectMap(modifier = Modifier)
                     Tab.PROFILE -> ProfileScreen(modifier = Modifier)
