@@ -122,6 +122,27 @@ create table if not exists public.posts (
     created_at timestamptz not null default now()
 );
 
+-- Threads in Foren (Ersteller gibt Titel vor und verfasst ersten Beitrag)
+create table if not exists public.threads (
+    id uuid primary key default uuid_generate_v4(),
+    forum_id uuid not null references public.forums(id) on delete cascade,
+    title text not null,
+    first_post text not null default '',
+    created_by uuid not null references public.profiles(id),
+    created_at timestamptz not null default now()
+);
+
+-- Kommentare zu Pinnwand-Posts und Threads
+create table if not exists public.post_comments (
+    id uuid primary key default uuid_generate_v4(),
+    post_id uuid references public.posts(id) on delete cascade,
+    thread_id uuid references public.threads(id) on delete cascade,
+    author_id uuid not null references public.profiles(id),
+    body text not null,
+    created_at timestamptz not null default now(),
+    check (post_id is not null or thread_id is not null)
+);
+
 -- ---------- Chat ----------
 create table if not exists public.chat_channels (
     id uuid primary key default uuid_generate_v4(),
@@ -239,6 +260,8 @@ grant select, insert, update, delete on public.area_moderators to authenticated;
 grant select, insert, update, delete on public.area_subscriptions to authenticated;
 grant select, insert, update, delete on public.forums to authenticated;
 grant select, insert, update, delete on public.posts to authenticated;
+grant select, insert, update, delete on public.threads to authenticated;
+grant select, insert, update, delete on public.post_comments to authenticated;
 grant select, insert, update, delete on public.chat_channels to authenticated;
 grant select, insert, update, delete on public.messages to authenticated;
 grant select, insert, update, delete on public.channel_mutes to authenticated;
@@ -259,6 +282,8 @@ alter table public.area_moderators enable row level security;
 alter table public.area_subscriptions enable row level security;
 alter table public.forums enable row level security;
 alter table public.posts enable row level security;
+alter table public.threads enable row level security;
+alter table public.post_comments enable row level security;
 alter table public.chat_channels enable row level security;
 alter table public.messages enable row level security;
 alter table public.channel_mutes enable row level security;
@@ -327,6 +352,17 @@ create policy "posts self update" on public.posts for update using (auth.uid() =
 create policy "posts self delete" on public.posts for delete using (auth.uid() = author_id);
 create policy "posts mod delete" on public.posts for delete using (public.is_area_moderator(area_id));
 create policy "posts mod pin" on public.posts for update using (public.is_area_moderator(area_id));
+
+-- Threads: Area-Mitglieder lesen/erstellen; Kommentare ebenso
+create policy "threads read" on public.threads for select using (public.is_project_member((select a.project_id from public.forums f join public.areas a on a.id = f.area_id where f.id = forum_id)));
+create policy "threads member create" on public.threads for insert with check (
+    auth.uid() = created_by and public.is_project_member((select a.project_id from public.forums f join public.areas a on a.id = f.area_id where f.id = forum_id)));
+create policy "comments read" on public.post_comments for select using (
+    (post_id is not null and public.is_project_member((select project_id from public.areas where id = (select area_id from public.posts where id = post_id))))
+    or (thread_id is not null and public.is_project_member((select a.project_id from public.threads t join public.forums f on f.id = t.forum_id join public.areas a on a.id = f.area_id where t.id = thread_id)))
+);
+create policy "comments self insert" on public.post_comments for insert with check (auth.uid() = author_id);
+create policy "comments self delete" on public.post_comments for delete using (auth.uid() = author_id);
 
 create policy "channels read" on public.chat_channels for select using (public.is_project_member(project_id));
 create policy "channels admin write" on public.chat_channels for all using (public.is_project_admin(project_id));

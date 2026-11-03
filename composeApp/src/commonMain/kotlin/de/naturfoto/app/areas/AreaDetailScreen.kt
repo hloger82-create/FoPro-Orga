@@ -50,14 +50,19 @@ fun AreaDetailScreen(
     var tab by remember { mutableStateOf(0) } // 0 = Pinnwand, 1 = Foren
     var forums by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var posts by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var threads by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var selectedForum by remember { mutableStateOf<String?>(null) }
+    var selectedThread by remember { mutableStateOf<JsonObject?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var showNewForum by remember { mutableStateOf(false) }
     var showNewPost by remember { mutableStateOf(false) }
+    var showNewThread by remember { mutableStateOf(false) }
 
     var forumName by remember { mutableStateOf("") }
     var postTitle by remember { mutableStateOf("") }
     var postBody by remember { mutableStateOf("") }
+    var threadTitle by remember { mutableStateOf("") }
+    var threadFirstPost by remember { mutableStateOf("") }
 
     fun loadPosts() {
         scope.launch {
@@ -81,7 +86,11 @@ fun AreaDetailScreen(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                if (tab == 0) showNewPost = true else showNewForum = true
+                when {
+                    tab == 0 -> showNewPost = true
+                    selectedForum != null && selectedThread == null -> showNewThread = true
+                    else -> showNewForum = true
+                }
             }) {
                 Icon(Icons.Default.Add, contentDescription = "Neu")
             }
@@ -96,19 +105,35 @@ fun AreaDetailScreen(
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
 
             if (tab == 0) {
-                PostList(posts, onDelete = { id ->
+                PostList(posts, repo = repo, onDelete = { id ->
                     scope.launch {
                         try { repo.deletePost(id); loadPosts() } catch (e: Exception) { error = e.message }
                     }
                 })
+            } else if (selectedThread != null) {
+                ThreadDetail(
+                    thread = selectedThread!!,
+                    repo = repo,
+                    onBack = { selectedThread = null },
+                )
+            } else if (selectedForum != null) {
+                ThreadList(
+                    threads = threads,
+                    onOpenThread = { selectedThread = it },
+                    onBack = {
+                        selectedForum = null
+                        tab = 0
+                        loadPosts()
+                    },
+                )
             } else {
                 ForumList(
                     forums = forums,
-                    selectedForum = selectedForum,
                     onSelectForum = { fid ->
-                        selectedForum = fid
-                        tab = 0
-                        loadPosts()
+                        scope.launch {
+                            selectedForum = fid
+                            threads = repo.listThreads(fid)
+                        }
                     },
                 )
             }
@@ -135,6 +160,36 @@ fun AreaDetailScreen(
                     ) { Text("Erstellen") }
                 },
                 dismissButton = { TextButton(onClick = { showNewForum = false }) { Text("Abbrechen") } },
+            )
+        }
+
+        if (showNewThread) {
+            AlertDialog(
+                onDismissRequest = { showNewThread = false },
+                title = { Text("Neuer Thread") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(threadTitle, { threadTitle = it }, label = { Text("Threadtitel (vorgegeben)") }, singleLine = true)
+                        OutlinedTextField(threadFirstPost, { threadFirstPost = it }, label = { Text("Erster Beitrag") }, minLines = 3)
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        enabled = threadTitle.isNotBlank() && selectedForum != null,
+                        onClick = {
+                            scope.launch {
+                                try {
+                                    repo.createThread(selectedForum!!, threadTitle.trim(), threadFirstPost.trim())
+                                    showNewThread = false
+                                    threadTitle = ""
+                                    threadFirstPost = ""
+                                    threads = repo.listThreads(selectedForum!!)
+                                } catch (e: Exception) { error = e.message }
+                            }
+                        },
+                    ) { Text("Eröffnen") }
+                },
+                dismissButton = { TextButton(onClick = { showNewThread = false }) { Text("Abbrechen") } },
             )
         }
 
@@ -171,7 +226,7 @@ fun AreaDetailScreen(
 }
 
 @Composable
-private fun PostList(posts: List<JsonObject>, onDelete: (String) -> Unit) {
+private fun PostList(posts: List<JsonObject>, repo: AreasRepository, onDelete: (String) -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
@@ -189,10 +244,96 @@ private fun PostList(posts: List<JsonObject>, onDelete: (String) -> Unit) {
                         if (post.bool("pinned")) Text("📌", style = MaterialTheme.typography.bodyMedium)
                     }
                     post.str("body").let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                    CommentSection(repo = repo, postId = post.str("id"))
                     TextButton(onClick = { onDelete(post.str("id")) }) { Text("Löschen") }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CommentSection(repo: AreasRepository, postId: String? = null, threadId: String? = null) {
+    val scope = rememberCoroutineScope()
+    var comments by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var input by remember { mutableStateOf("") }
+    val key = postId ?: threadId ?: ""
+
+    LaunchedEffect(key) {
+        comments = repo.listComments(postId = postId, threadId = threadId)
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        comments.forEach { c -> Text("• ${c.str("body")}", style = MaterialTheme.typography.bodySmall) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = input,
+                onValueChange = { input = it },
+                modifier = Modifier.weight(1f),
+                placeholder = { Text("Kommentar…") },
+                singleLine = true,
+            )
+            TextButton(
+                enabled = input.isNotBlank(),
+                onClick = {
+                    scope.launch {
+                        repo.addComment(postId = postId, threadId = threadId, body = input.trim())
+                        input = ""
+                        comments = repo.listComments(postId = postId, threadId = threadId)
+                    }
+                },
+            ) { Text("Senden") }
+        }
+    }
+}
+
+@Composable
+private fun ThreadList(
+    threads: List<JsonObject>,
+    onOpenThread: (JsonObject) -> Unit,
+    onBack: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        TextButton(onClick = onBack) { Text("← Zurück zu den Foren") }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(threads, key = { it.str("id") }) { thread ->
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    onClick = { onOpenThread(thread) },
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(thread.str("title"), style = MaterialTheme.typography.titleMedium)
+                        Text(thread.str("first_post").take(120), style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThreadDetail(
+    thread: JsonObject,
+    repo: AreasRepository,
+    onBack: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        TextButton(onClick = onBack) { Text("← Zurück") }
+        Text(thread.str("title"), style = MaterialTheme.typography.headlineSmall)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            Text(thread.str("first_post"), modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyLarge)
+        }
+        Text("Diskussion:", style = MaterialTheme.typography.titleSmall)
+        CommentSection(repo = repo, threadId = thread.str("id"))
     }
 }
 

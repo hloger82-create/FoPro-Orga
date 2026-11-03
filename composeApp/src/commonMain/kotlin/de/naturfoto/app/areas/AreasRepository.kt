@@ -74,4 +74,40 @@ class AreasRepository {
     suspend fun deletePost(postId: String) {
         db["posts"].delete { filter { eq("id", postId) } }
     }
+
+    suspend fun listThreads(forumId: String): List<kotlinx.serialization.json.JsonObject> =
+        db["threads"].select {
+            filter { eq("forum_id", forumId) }
+            order("created_at", Order.DESCENDING)
+        }.decodeList<kotlinx.serialization.json.JsonObject>()
+
+    suspend fun createThread(forumId: String, title: String, firstPost: String) {
+        db["threads"].insert(
+            jsonOf(
+                "forum_id" to forumId,
+                "title" to title,
+                "first_post" to firstPost,
+                "created_by" to (userId ?: ""),
+            ),
+        )
+    }
+
+    suspend fun listComments(postId: String? = null, threadId: String? = null): List<kotlinx.serialization.json.JsonObject> =
+        db["post_comments"].select {
+            filter {
+                if (postId != null) eq("post_id", postId) else eq("thread_id", threadId ?: "")
+            }
+            order("created_at", Order.ASCENDING)
+        }.decodeList<kotlinx.serialization.json.JsonObject>()
+
+    suspend fun addComment(postId: String? = null, threadId: String? = null, body: String) {
+        db["post_comments"].insert(
+            jsonOf(
+                "post_id" to postId,
+                "thread_id" to threadId,
+                "author_id" to (userId ?: ""),
+                "body" to body,
+            ),
+        )
+    }
 }
