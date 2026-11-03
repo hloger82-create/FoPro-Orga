@@ -17,12 +17,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import de.naturfoto.app.areas.AreaDetailScreen
+import de.naturfoto.app.areas.AreasRepository
+import de.naturfoto.app.areas.AreasScreen
 import de.naturfoto.app.auth.AuthRepository
 import de.naturfoto.app.auth.AuthScreen
 import de.naturfoto.app.map.ProjectMap
@@ -47,6 +51,11 @@ fun NaturfotoApp() {
             return@NaturfotoTheme
         }
         var tab by remember { mutableStateOf(Tab.TIMELINE) }
+        var projectId by remember { mutableStateOf<String?>(null) }
+        var selectedArea by remember { mutableStateOf<Pair<String, String>?>(null) }
+        LaunchedEffect(Unit) {
+            if (projectId == null) projectId = AreasRepository().firstProjectIdForUser()
+        }
         Scaffold(
             bottomBar = {
                 NavigationBar {
@@ -64,7 +73,24 @@ fun NaturfotoApp() {
             Box(modifier = Modifier.padding(innerPadding)) {
                 when (tab) {
                     Tab.TIMELINE -> PlaceholderScreen("Timeline")
-                    Tab.AREAS -> PlaceholderScreen("Areas")
+                    Tab.AREAS -> {
+                        val pid = projectId
+                        val area = selectedArea
+                        if (area != null) {
+                            AreaDetailScreen(
+                                areaId = area.first,
+                                areaName = area.second,
+                                onBack = { selectedArea = null },
+                            )
+                        } else if (pid != null) {
+                            AreasScreen(
+                                projectId = pid,
+                                onOpenArea = { id, name -> selectedArea = id to name },
+                            )
+                        } else {
+                            PlaceholderScreen("Projekt wird geladen…")
+                        }
+                    }
                     Tab.CHAT -> PlaceholderScreen("Chat")
                     Tab.CALENDAR -> PlaceholderScreen("Kalender")
                     Tab.MAP -> ProjectMap(modifier = Modifier)
