@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+@Composable
 expect fun LocationPicker(
     initialLat: Double? = null,
     initialLng: Double? = null,

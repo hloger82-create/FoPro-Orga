@@ -11,6 +11,7 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 
+@Composable
 actual fun LocationPicker(
     initialLat: Double?,
     initialLng: Double?,
@@ -31,13 +32,13 @@ actual fun LocationPicker(
                 }
                 overlays.add(marker)
                 overlays.add(
-                    object : MapEventsOverlay() {
-                        override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
+                    MapEventsOverlay { p ->
+                        if (p != null) {
                             p ?: return false
                             marker.position = p
                             onPicked(p.latitude, p.longitude, "")
-                            return true
                         }
+                        true
                     },
                 )
             }
