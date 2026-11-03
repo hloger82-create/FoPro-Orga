@@ -32,14 +32,19 @@ actual fun LocationPicker(
                 }
                 overlays.add(marker)
                 overlays.add(
-                    MapEventsOverlay { p ->
-                        if (p != null) {
-                            p ?: return false
-                            marker.position = p
-                            onPicked(p.latitude, p.longitude, "")
-                        }
-                        true
-                    },
+                    MapEventsOverlay(
+                        object : MapEventsReceiver {
+                            override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
+                                if (p != null) {
+                                    marker.position = p
+                                    onPicked(p.latitude, p.longitude, "")
+                                }
+                                return true
+                            }
+
+                            override fun longPressHelper(p: GeoPoint?): Boolean = false
+                        },
+                    ),
                 )
             }
         },
