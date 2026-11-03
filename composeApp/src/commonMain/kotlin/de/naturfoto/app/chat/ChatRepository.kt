@@ -1,6 +1,7 @@
 package de.naturfoto.app.chat
 
 import de.naturfoto.app.data.Supabase
+import de.naturfoto.app.data.jsonOf
 import de.naturfoto.app.data.bool
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
@@ -28,7 +29,7 @@ class ChatRepository {
 
     suspend fun sendMessage(channelId: String, body: String, imageUrl: String? = null) {
         db["messages"].insert(
-            mapOf(
+            jsonOf(
                 "channel_id" to channelId,
                 "author_id" to (userId ?: ""),
                 "body" to body,
@@ -39,7 +40,7 @@ class ChatRepository {
 
     suspend fun setMuted(channelId: String, muted: Boolean) {
         db["channel_mutes"].upsert(
-            mapOf(
+            jsonOf(
                 "channel_id" to channelId,
                 "user_id" to (userId ?: ""),
                 "muted" to muted,

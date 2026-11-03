@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import de.naturfoto.app.data.Supabase
 import de.naturfoto.app.data.bool
+import de.naturfoto.app.data.jsonOf
 import de.naturfoto.app.data.obj
 import de.naturfoto.app.data.list
 import de.naturfoto.app.data.str
@@ -150,10 +151,10 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                             set("bio", bio.ifBlank { null })
                             set("avatar_url", avatarUrl.ifBlank { null })
                             set("homepage", homepage.ifBlank { null })
-                            set("socials", socials.split(',').mapNotNull {
+                            set("socials", jsonOf(*socials.split(',').mapNotNull {
                                 val p = it.split('=', limit = 2)
                                 if (p.size == 2 && p[0].isNotBlank()) p[0].trim() to p[1].trim() else null
-                            }.toMap())
+                            }.toTypedArray()))
                             set("skill_tags", skillTags.split(',').map { it.trim() }.filter { it.isNotEmpty() })
                             set("show_homepage_publicly", showHomepagePublicly)
                             set("show_socials_publicly", showSocialsPublicly)

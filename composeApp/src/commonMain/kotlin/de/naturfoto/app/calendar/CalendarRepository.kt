@@ -1,6 +1,7 @@
 package de.naturfoto.app.calendar
 
 import de.naturfoto.app.data.Supabase
+import de.naturfoto.app.data.jsonOf
 import de.naturfoto.app.data.bool
 import de.naturfoto.app.data.str
 import io.github.jan.supabase.auth.auth
@@ -31,7 +32,7 @@ class CalendarRepository {
         maxParticipants: Int?,
     ) {
         db["events"].insert(
-            mapOf(
+            jsonOf(
                 "project_id" to projectId,
                 "title" to title,
                 "description" to description,
@@ -63,7 +64,7 @@ class CalendarRepository {
 
     suspend fun setRsvp(eventId: String, status: String) {
         db["event_rsvps"].upsert(
-            mapOf(
+            jsonOf(
                 "event_id" to eventId,
                 "user_id" to (userId ?: ""),
                 "status" to status,
@@ -79,7 +80,7 @@ class CalendarRepository {
 
     suspend fun addComment(eventId: String, body: String) {
         db["event_comments"].insert(
-            mapOf(
+            jsonOf(
                 "event_id" to eventId,
                 "author_id" to (userId ?: ""),
                 "body" to body,

@@ -23,6 +23,7 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(libs.androidx.navigation.compose)
             implementation(libs.coil.compose)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.contentNegotiation)

@@ -1,6 +1,7 @@
 package de.naturfoto.app.areas
 
 import de.naturfoto.app.data.Supabase
+import de.naturfoto.app.data.jsonOf
 import de.naturfoto.app.data.str
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
@@ -27,7 +28,7 @@ class AreasRepository {
 
     suspend fun createArea(projectId: String, name: String, description: String?) {
         db["areas"].insert(
-            mapOf(
+            jsonOf(
                 "project_id" to projectId,
                 "name" to name,
                 "description" to description,
@@ -41,7 +42,7 @@ class AreasRepository {
 
     suspend fun createForum(areaId: String, name: String) {
         db["forums"].insert(
-            mapOf(
+            jsonOf(
                 "area_id" to areaId,
                 "name" to name,
                 "created_by" to (userId ?: ""),
@@ -59,7 +60,7 @@ class AreasRepository {
 
     suspend fun createPost(areaId: String, forumId: String?, title: String, body: String, imageUrl: String? = null) {
         db["posts"].insert(
-            mapOf(
+            jsonOf(
                 "area_id" to areaId,
                 "forum_id" to forumId,
                 "author_id" to (userId ?: ""),

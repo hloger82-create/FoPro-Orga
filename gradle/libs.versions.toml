@@ -6,6 +6,7 @@ osmdroid = "6.1.20"
 ktor = "3.2.3"
 supabase = "3.0.2"
 coil = "3.3.0"
+kotlinxDatetime = "0.7.1"
 androidxNavigation = "2.9.0-beta01"
 androidxLifecycle = "2.9.0-beta01"
 
@@ -20,6 +21,7 @@ supabase-postgrest = { module = "io.github.jan-tennert.supabase:postgrest-kt", v
 supabase-realtime = { module = "io.github.jan-tennert.supabase:realtime-kt", version.ref = "supabase" }
 supabase-storage = { module = "io.github.jan-tennert.supabase:storage-kt", version.ref = "supabase" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 androidx-navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "androidxNavigation" }
 androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidxLifecycle" }
 
