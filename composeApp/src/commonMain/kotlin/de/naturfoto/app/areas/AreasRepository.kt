@@ -3,6 +3,7 @@ package de.naturfoto.app.areas
 import de.naturfoto.app.data.Supabase
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.serialization.json.Json
 
 private val json = Json { ignoreUnknownKeys = true }
@@ -49,13 +50,11 @@ class AreasRepository {
 
     suspend fun listPosts(areaId: String, forumId: String?): List<Map<String, Any?>> =
         db["posts"].select {
-            filter {
-                eq("area_id", areaId)
-                if (forumId == null) eq("forum_id", null) else eq("forum_id", forumId)
-            }
-            order("pinned", false)
-            order("created_at", false)
+            filter { eq("area_id", areaId) }
+            order("pinned", Order.DESCENDING)
+            order("created_at", Order.DESCENDING)
         }.decodeList<Map<String, Any?>>()
+            .filter { (it["forum_id"]?.toString() ?: "") == (forumId ?: "") }
 
     suspend fun createPost(areaId: String, forumId: String?, title: String, body: String, imageUrl: String? = null) {
         db["posts"].insert(
