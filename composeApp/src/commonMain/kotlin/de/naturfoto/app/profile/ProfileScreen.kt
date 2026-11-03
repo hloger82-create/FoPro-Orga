@@ -35,7 +35,7 @@ import de.naturfoto.app.data.obj
 import de.naturfoto.app.data.list
 import de.naturfoto.app.data.str
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import de.naturfoto.app.data.textOrNull
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
@@ -77,7 +77,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
             avatarUrl = row.str("avatar_url")
             homepage = row.str("homepage")
             socials = row.obj("socials").entries
-                .joinToString(", ") { "${it.key}=${it.value.jsonPrimitive.contentOrNull}" }
+                .joinToString(", ") { "${it.key}=${it.value.textOrNull}" }
             skillTags = row.list("skill_tags").joinToString(", ")
             showHomepagePublicly = row.bool("show_homepage_publicly")
             showSocialsPublicly = row.bool("show_socials_publicly")

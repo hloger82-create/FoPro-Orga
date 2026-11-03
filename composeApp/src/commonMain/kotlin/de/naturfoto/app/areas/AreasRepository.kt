@@ -18,7 +18,7 @@ class AreasRepository {
         val uid = userId ?: return null
         val memberships = db["project_members"].select { filter { eq("user_id", uid) } }
             .decodeList<kotlinx.serialization.json.JsonObject>()
-        return memberships.firstOrNull().str("project_id")
+        return memberships.firstOrNull()?.str("project_id")
     }
 
     suspend fun listAreas(projectId: String): List<kotlinx.serialization.json.JsonObject> =
