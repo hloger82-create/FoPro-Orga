@@ -33,6 +33,7 @@ import de.naturfoto.app.chat.ChatScreen
 import de.naturfoto.app.auth.AuthScreen
 import de.naturfoto.app.map.ProjectMap
 import de.naturfoto.app.profile.ProfileScreen
+import de.naturfoto.app.timeline.TimelineScreen
 import de.naturfoto.app.theme.NaturfotoTheme
 
 private enum class Tab(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
@@ -74,7 +75,10 @@ fun NaturfotoApp() {
         ) { innerPadding ->
             Box(modifier = Modifier.padding(innerPadding)) {
                 when (tab) {
-                    Tab.TIMELINE -> PlaceholderScreen("Timeline")
+                    Tab.TIMELINE -> {
+                        val pid = projectId
+                        if (pid != null) TimelineScreen(projectId = pid) else PlaceholderScreen("Projekt wird geladen…")
+                    }
                     Tab.AREAS -> {
                         val pid = projectId
                         val area = selectedArea
