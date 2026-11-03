@@ -245,11 +245,19 @@ create table if not exists public.survey_votes (
 );
 
 -- ---------- Realtime ----------
-alter publication supabase_realtime add table public.messages;
-alter publication supabase_realtime add table public.posts;
-alter publication supabase_realtime add table public.events;
-alter publication supabase_realtime add table public.event_rsvps;
-alter publication supabase_realtime add table public.map_spots;
+do $$
+declare t text;
+begin
+    foreach t in array array['messages','posts','events','event_rsvps','map_spots','threads','post_comments']
+    loop
+        if not exists (
+            select 1 from pg_publication_tables
+            where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+        ) then
+            execute format('alter publication supabase_realtime add table public.%I', t);
+        end if;
+    end loop;
+end $$;
 
 -- ---------- Grants (RLS allein gewährt keinen Zugriff) ----------
 grant select, insert, update, delete on public.profiles to authenticated;
