@@ -321,8 +321,8 @@ create policy "forums member create" on public.forums for insert with check (
     public.is_project_member((select project_id from public.areas where id = area_id)) and auth.uid() = created_by);
 
 -- Posts: Mitglieder der Area lesen; eigene Posts schreiben/löschen; Mods/Admins pinnen & fremde löschen
-create policy "posts read" on public.posts for select using (public.is_project_member(area_id));
-create policy "posts self insert" on public.posts for insert with check (auth.uid() = author_id and public.is_project_member(area_id));
+create policy "posts read" on public.posts for select using (public.is_project_member((select project_id from public.areas where id = area_id)));
+create policy "posts self insert" on public.posts for insert with check (auth.uid() = author_id and public.is_project_member((select project_id from public.areas where id = area_id)));
 create policy "posts self update" on public.posts for update using (auth.uid() = author_id);
 create policy "posts self delete" on public.posts for delete using (auth.uid() = author_id);
 create policy "posts mod delete" on public.posts for delete using (public.is_area_moderator(area_id));
