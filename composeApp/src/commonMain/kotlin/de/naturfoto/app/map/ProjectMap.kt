@@ -4,4 +4,4 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 @Composable
-expect fun ProjectMap(modifier: Modifier = Modifier)
+expect fun ProjectMap(projectId: String, modifier: Modifier = Modifier)

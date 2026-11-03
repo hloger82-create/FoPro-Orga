@@ -105,7 +105,10 @@ fun NaturfotoApp() {
                         val pid = projectId
                         if (pid != null) CalendarScreen(projectId = pid) else PlaceholderScreen("Projekt wird geladen…")
                     }
-                    Tab.MAP -> ProjectMap(modifier = Modifier)
+                    Tab.MAP -> {
+                        val pid = projectId
+                        if (pid != null) ProjectMap(projectId = pid, modifier = Modifier) else PlaceholderScreen("Projekt wird geladen…")
+                    }
                     Tab.PROFILE -> ProfileScreen(modifier = Modifier)
                 }
             }
