@@ -54,7 +54,7 @@ class ChatRepository {
             }
         }.decodeList<Map<String, Any?>>().firstOrNull()?.get("muted") as? Boolean ?: false
 
-    fun subscribeMessages(
+    suspend fun subscribeMessages(
         channelId: String,
         flow: MutableStateFlow<List<Map<String, Any?>>>,
     ): RealtimeChannel? {
