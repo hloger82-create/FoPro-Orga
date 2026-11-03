@@ -22,6 +22,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import de.naturfoto.app.auth.AuthRepository
+import de.naturfoto.app.auth.AuthScreen
 import de.naturfoto.app.map.ProjectMap
 import de.naturfoto.app.theme.NaturfotoTheme
 
@@ -36,6 +38,11 @@ private enum class Tab(val label: String, val icon: androidx.compose.ui.graphics
 @Composable
 fun NaturfotoApp() {
     NaturfotoTheme {
+        var signedIn by remember { mutableStateOf(AuthRepository().currentUserId() != null) }
+        if (!signedIn) {
+            AuthScreen(onSignedIn = { signedIn = true })
+            return@NaturfotoTheme
+        }
         var tab by remember { mutableStateOf(Tab.TIMELINE) }
         Scaffold(
             bottomBar = {
