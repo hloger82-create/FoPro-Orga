@@ -51,10 +51,10 @@ class AreasRepository {
         db["posts"].select {
             filter {
                 eq("area_id", areaId)
-                if (forumId == null) isTo("forum_id", null) else eq("forum_id", forumId)
+                if (forumId == null) eq("forum_id", null) else eq("forum_id", forumId)
             }
-            order("pinned", ascending = false)
-            order("created_at", ascending = false)
+            order("pinned", false)
+            order("created_at", false)
         }.decodeList<Map<String, Any?>>()
 
     suspend fun createPost(areaId: String, forumId: String?, title: String, body: String, imageUrl: String? = null) {
