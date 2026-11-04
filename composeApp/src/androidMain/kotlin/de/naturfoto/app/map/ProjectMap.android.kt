@@ -110,7 +110,17 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 }
             },
             update = { mapView ->
-                mapView.overlays.removeAll { it is Marker }
+                mapView.overlays.removeAll { it is Marker || it is Polygon }
+                if (region.size >= 3) {
+                    mapView.overlays.add(
+                        Polygon().apply {
+                            points = region.map { GeoPoint(it.first, it.second) }
+                            outlinePaint.color = 0xFF7FB069.toInt()
+                            outlinePaint.strokeWidth = 6f
+                            setFillColor(0x227FB069)
+                        },
+                    )
+                }
                 spots.forEach { s ->
                     mapView.overlays.add(
                         Marker(mapView).apply {
@@ -141,7 +151,10 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                     .background(translucentSurface())
                     .padding(horizontal = 16.dp, vertical = 12.dp),
             ) {
-                Text("Projektgebiet · ${spots.size} Spots", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    if (region.size >= 3) "Projektgebiet: ${region.size} Grenzpunkte · ${spots.size} Spots" else "Kein Projektgebiet festgelegt · ${spots.size} Spots",
+                    style = MaterialTheme.typography.titleMedium,
+                )
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
