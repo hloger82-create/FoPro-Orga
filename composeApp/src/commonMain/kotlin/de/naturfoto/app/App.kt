@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Poll
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -33,6 +34,7 @@ import de.naturfoto.app.chat.ChatScreen
 import de.naturfoto.app.auth.AuthScreen
 import de.naturfoto.app.map.ProjectMap
 import de.naturfoto.app.profile.ProfileScreen
+import de.naturfoto.app.surveys.SurveysScreen
 import de.naturfoto.app.timeline.TimelineScreen
 import de.naturfoto.app.theme.NaturfotoTheme
 
@@ -43,6 +45,7 @@ private enum class Tab(val label: String, val icon: androidx.compose.ui.graphics
     CALENDAR("Kalender", Icons.Default.CalendarMonth),
     MAP("Karte", Icons.Default.Map),
     PROFILE("Profil", Icons.Default.Person),
+    SURVEYS("Umfragen", Icons.Default.Poll),
 }
 
 @Composable
@@ -110,6 +113,10 @@ fun NaturfotoApp() {
                         if (pid != null) ProjectMap(projectId = pid, modifier = Modifier) else PlaceholderScreen("Projekt wird geladen…")
                     }
                     Tab.PROFILE -> ProfileScreen(modifier = Modifier)
+                    Tab.SURVEYS -> {
+                        val pid = projectId
+                        if (pid != null) SurveysScreen(projectId = pid) else PlaceholderScreen("Projekt wird geladen…")
+                    }
                 }
             }
         }
