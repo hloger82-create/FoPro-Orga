@@ -61,6 +61,7 @@ import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polygon
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 actual fun ProjectMap(projectId: String, modifier: Modifier) {
     val repo = remember { MapRepository() }
