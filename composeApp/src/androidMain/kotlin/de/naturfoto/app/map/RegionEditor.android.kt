@@ -84,7 +84,7 @@ private suspend fun searchRegion(query: String): List<Pair<Double, Double>>? {
     }
     // Nur den größten Ring (nach Punktzahl) verwenden und ausdünnen, damit das Polygon nicht self-intersectt
     val largest = rings.maxByOrNull { it.size } ?: return null
-    val step = (largest.size / 500).coerceAtLeast(1)
+    val step = (largest.size / 2000).coerceAtLeast(1)
     return largest.filterIndexed { i, _ -> i % step == 0 }
 }
 
