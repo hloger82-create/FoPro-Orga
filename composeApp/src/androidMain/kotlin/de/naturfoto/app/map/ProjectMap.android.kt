@@ -175,7 +175,14 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                                     return true
                                 }
                                 // Wird unten nicht gebraucht, MapEventsReceiver verlangt beide Methoden
-                                override fun longPressHelper(p: GeoPoint?): Boolean = false
+                                override fun longPressHelper(p: GeoPoint?): Boolean {
+                                    if (p != null && spotMode == SpotMode.MAP_PICK) {
+                                        spotCoord = p
+                                        spotMode = null
+                                        return true
+                                    }
+                                    return false
+                                }
                             },
                         ),
                     )
@@ -311,6 +318,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 title = { Text("Location eintragen") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium) }
                         if (spotMode == null && spotCoord == null) {
                             Text("Koordinaten bestimmen:", style = MaterialTheme.typography.labelMedium)
                             TextButton(onClick = {
