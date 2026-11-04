@@ -79,7 +79,7 @@ private suspend fun searchRegion(query: String): List<Pair<Double, Double>>? {
         else -> {
             val lat = primitiveContent(first["lat"])?.toDoubleOrNull()
             val lon = primitiveContent(first["lon"])?.toDoubleOrNull()
-            return if (lat != null && lon != null) listOf(listOf(lat to lon)) else null
+            return if (lat != null && lon != null) listOf(lat to lon) else null
         }
     }
     // Nur den größten Ring (nach Punktzahl) verwenden und ausdünnen, damit das Polygon nicht self-intersectt
