@@ -13,7 +13,7 @@ import kotlinx.serialization.json.JsonObject
 
 class MapRepository {
     private val db get() = Supabase.client.postgrest
-    private val userId get() = Supabase.client.auth.currentUserOrNull()?.id
+    val userId get() = Supabase.client.auth.currentUserOrNull()?.id
 
     suspend fun isAdmin(projectId: String): Boolean =
         db["project_members"].select {

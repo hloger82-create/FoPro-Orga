@@ -208,7 +208,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 spots.forEach { s ->
                     val spotArea = s.str("area_id").ifBlank { null }
                     // Nur anzeigen: eigene/private Spots, keine Area, oder abonnierte Area
-                    val visible = s.str("author_id") == repo.userIdPublic()
+                    val visible = s.str("author_id") == repo.userId
                             || spotArea == null
                             || spotArea in subscribedAreas
                     if (!visible) return@forEach
