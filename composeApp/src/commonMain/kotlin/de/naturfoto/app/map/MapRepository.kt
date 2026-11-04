@@ -1,6 +1,7 @@
 package de.naturfoto.app.map
 
 import de.naturfoto.app.data.Supabase
+import de.naturfoto.app.data.bool
 import de.naturfoto.app.data.jsonOf
 import de.naturfoto.app.data.str
 import de.naturfoto.app.data.textOrNull
@@ -71,6 +72,14 @@ class MapRepository {
             order("created_at", Order.DESCENDING)
         }.decodeList<JsonObject>()
             .filter { it.str("visibility") != "private" || it.str("author_id") == userId }
+
+    suspend fun subscribedAreaIds(projectId: String): Set<String> {
+        val areas = listAreas(projectId).map { it.str("id") }.toSet()
+        val subs = db["area_subscriptions"].select { filter { eq("user_id", userId ?: "") } }
+            .decodeList<JsonObject>()
+            .associate { it.str("area_id") to (if (it.containsKey("subscribed")) it.bool("subscribed") else true) }
+        return areas.filter { subs[it] != false }.toSet()
+    }
 
     suspend fun listAreas(projectId: String): List<JsonObject> =
         db["areas"].select {

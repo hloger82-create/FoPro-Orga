@@ -71,6 +71,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
     var region by remember { mutableStateOf<List<Pair<Double, Double>>>(emptyList()) }
     var spots by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var areas by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var subscribedAreas by remember { mutableStateOf<Set<String>>(emptySet()) }
     var authors by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var error by remember { mutableStateOf<String?>(null) }
     var admin by remember { mutableStateOf(false) }
@@ -146,6 +147,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
         try {
             region = repo.projectRegion(projectId)
             areas = repo.listAreas(projectId)
+            subscribedAreas = repo.subscribedAreaIds(projectId)
             admin = repo.isAdmin(projectId)
         } catch (e: Exception) { error = e.message }
         loadSpots()
@@ -204,7 +206,13 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                     )
                 }
                 spots.forEach { s ->
-                    val color = repo.areaColor(s.str("area_id").ifBlank { null })
+                    val spotArea = s.str("area_id").ifBlank { null }
+                    // Nur anzeigen: eigene/private Spots, keine Area, oder abonnierte Area
+                    val visible = s.str("author_id") == repo.userIdPublic()
+                            || spotArea == null
+                            || spotArea in subscribedAreas
+                    if (!visible) return@forEach
+                    val color = repo.areaColor(spotArea)
                     mapView.overlays.add(
                         Marker(mapView).apply {
                             position = GeoPoint(
@@ -249,8 +257,9 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
 
         Column(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
+                .align(Alignment.BottomCenter)
                 .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (admin) {
