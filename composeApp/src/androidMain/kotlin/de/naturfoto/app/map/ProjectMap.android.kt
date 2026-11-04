@@ -309,9 +309,12 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                             Text("Koordinaten bestimmen:", style = MaterialTheme.typography.labelMedium)
                             TextButton(onClick = {
                                 locOverlay?.enableMyLocation()
-                                locOverlay?.runOnFirstFix { loc -> spotCoord = loc }
                                 scope.launch {
-                                    kotlinx.coroutines.delay(3000)
+                                    repeat(10) {
+                                        kotlinx.coroutines.delay(1000)
+                                        locOverlay?.myLocation?.let { spotCoord = it }
+                                        if (spotCoord != null) return@repeat
+                                    }
                                     if (spotCoord == null) error = "Kein GPS-Fix — im Emulator: rechts „…“ → Location → Koordinaten → Send"
                                 }
                             }) { Text("📍 Mein Standort") }
