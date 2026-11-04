@@ -255,12 +255,13 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
 
-        Column(
+        Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .fillMaxWidth()
                 .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.Bottom,
         ) {
             if (admin) {
                 MapFab(Icons.Default.EditLocation, "Gebiet bearbeiten", MaterialTheme.colorScheme.secondary) { editingRegion = true }
