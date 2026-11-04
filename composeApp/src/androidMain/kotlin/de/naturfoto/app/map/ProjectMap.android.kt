@@ -196,7 +196,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                     RegionEditor(
                         currentPolygon = region,
                         onPolygonChanged = { region = it },
-                        modifier = Modifier.fillMaxWidth().height(360.dp),
+                        modifier = Modifier.fillMaxWidth().height(440.dp),
                     )
                 },
             )

@@ -122,7 +122,15 @@ actual fun RegionEditor(
                 drawing = emptyList()
                 drawn = emptyList()
                 onPolygonChanged(emptyList())
+                status = null
             }) { Text("Löschen") }
+            }
+            status?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
             }
         }
         Text(
@@ -130,11 +138,8 @@ actual fun RegionEditor(
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(horizontal = 8.dp),
         )
-        status?.let {
-            Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(horizontal = 8.dp))
-        }
         AndroidView(
-            modifier = Modifier.fillMaxWidth().height(280.dp),
+            modifier = Modifier.fillMaxWidth().height(320.dp),
             factory = { context ->
                 MapView(context).apply {
                     setTileSource(TileSourceFactory.MAPNIK)
