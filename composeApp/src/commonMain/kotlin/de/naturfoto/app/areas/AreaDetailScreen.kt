@@ -237,7 +237,13 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
                                 .width(3.dp)
                                 .background(MaterialTheme.colorScheme.secondary, RoundedCornerShape(2.dp)),
                         )
-                        Text("❝ $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                        Text(
+                            "❝ $it",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.secondary,
+                            maxLines = 2,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        )
                     }
                 }
                 Text(c.str("body"), style = MaterialTheme.typography.bodyMedium)
@@ -253,7 +259,12 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text("Antwort auf: ❝ ${replyTo!!.str("body").take(50)}${if (replyTo!!.str("body").length > 50) "…" else ""}")
+                    Text(
+                        "Antwort auf: ❝ ${replyTo!!.str("body")}",
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
                     TextButton(onClick = { replyTo = null; input = "" }) { Text("✕") }
                 }
             }
@@ -264,7 +275,8 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
                 onValueChange = { input = it },
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("Kommentar…") },
-                singleLine = true,
+                minLines = 2,
+                maxLines = 5,
             )
             TextButton(
                 enabled = input.isNotBlank(),
@@ -319,16 +331,23 @@ private fun ThreadDetail(
     repo: AreasRepository,
     onBack: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         TextButton(onClick = onBack) { Text("← Zurück zu den Threads") }
         Text(thread.str("title"), style = MaterialTheme.typography.headlineSmall)
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        androidx.compose.foundation.lazy.LazyColumn(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(thread.str("first_post"), modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyLarge)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                ) {
+                    Text(thread.str("first_post"), modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+            item { Text("Diskussion:", style = MaterialTheme.typography.titleSmall) }
+            item { CommentSection(repo = repo, threadId = thread.str("id")) }
         }
-        Text("Diskussion:", style = MaterialTheme.typography.titleSmall)
-        CommentSection(repo = repo, threadId = thread.str("id"))
     }
 }
