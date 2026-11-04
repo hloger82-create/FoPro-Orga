@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -53,6 +54,8 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
     var spots by remember { mutableStateOf<List<kotlinx.serialization.json.JsonObject>>(emptyList()) }
     var pending by remember { mutableStateOf<GeoPoint?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var admin by remember { mutableStateOf(false) }
+    var editingRegion by remember { mutableStateOf(false) }
 
     var title by remember { mutableStateOf("") }
     var desc by remember { mutableStateOf("") }
@@ -62,6 +65,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
         try {
             region = repo.projectRegion(projectId)
             spots = repo.listSpots(projectId)
+            admin = repo.isAdmin(projectId)
         } catch (e: Exception) {
             error = e.message
         }
@@ -137,12 +141,43 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
 
+        if (editingRegion) {
+            AlertDialog(
+                onDismissRequest = { editingRegion = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        scope.launch {
+                            repo.saveRegion(projectId, region)
+                            editingRegion = false
+                        }
+                    }) { Text("Speichern") }
+                },
+                dismissButton = { TextButton(onClick = { editingRegion = false }) { Text("Abbrechen") } },
+                text = {
+                    RegionEditor(
+                        currentPolygon = region,
+                        onPolygonChanged = { region = it },
+                        modifier = Modifier.fillMaxWidth().height(360.dp),
+                    )
+                },
+            )
+        }
+
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            if (admin) {
+                FloatingActionButton(
+                    onClick = { editingRegion = true },
+                    containerColor = translucentSurface(),
+                    contentColor = MaterialTheme.colorScheme.secondary,
+                ) {
+                    Icon(Icons.Default.Layers, contentDescription = "Projektgebiet bearbeiten")
+                }
+            }
             FloatingActionButton(
                 onClick = { },
                 containerColor = translucentSurface(),

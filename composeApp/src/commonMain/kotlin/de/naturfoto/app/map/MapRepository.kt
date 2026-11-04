@@ -14,6 +14,31 @@ class MapRepository {
     private val db get() = Supabase.client.postgrest
     private val userId get() = Supabase.client.auth.currentUserOrNull()?.id
 
+    suspend fun isAdmin(projectId: String): Boolean =
+        db["project_members"].select {
+            filter {
+                eq("project_id", projectId)
+                eq("user_id", userId ?: "")
+                eq("role", "admin")
+            }
+        }.decodeList<JsonObject>().isNotEmpty()
+
+    suspend fun saveRegion(projectId: String, polygon: List<Pair<Double, Double>>) {
+        val arr = kotlinx.serialization.json.JsonArray(
+            polygon.map { (lat, lng) ->
+                kotlinx.serialization.json.JsonArray(
+                    listOf(
+                        kotlinx.serialization.json.JsonPrimitive(lat),
+                        kotlinx.serialization.json.JsonPrimitive(lng),
+                    ),
+                )
+            },
+        )
+        db["projects"].update({ set("region_polygon", arr) }) {
+            filter { eq("id", projectId) }
+        }
+    }
+
     suspend fun projectRegion(projectId: String): List<Pair<Double, Double>> {
         val p = db["projects"].select { filter { eq("id", projectId) } }
             .decodeList<JsonObject>().firstOrNull() ?: return emptyList()

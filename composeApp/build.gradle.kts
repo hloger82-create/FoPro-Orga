@@ -42,6 +42,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.ktor.client.android)
             implementation(libs.osmdroid)
+            implementation(libs.androidx.preference)
         }
     }
 }

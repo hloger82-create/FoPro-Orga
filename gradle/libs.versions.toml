@@ -12,6 +12,7 @@ androidxLifecycle = "2.9.0-beta01"
 
 [libraries]
 osmdroid = { module = "org.osmdroid:osmdroid-android", version.ref = "osmdroid" }
+androidx-preference = { module = "androidx.preference:preference", version = "1.2.1" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
 ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
