@@ -191,7 +191,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                         RegionEditor(
                             currentPolygon = region,
                             onPolygonChanged = { region = it },
-                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().height(400.dp),
                         )
                         androidx.compose.foundation.layout.Row(
                             modifier = Modifier.fillMaxWidth(),
