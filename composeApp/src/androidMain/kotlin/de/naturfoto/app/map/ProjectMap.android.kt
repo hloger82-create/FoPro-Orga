@@ -212,7 +212,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                                 s.str("lng").toDoubleOrNull() ?: 0.0,
                             )
                             title = s.str("title")
-                            icon = android.graphics.drawable.ColorDrawable(color)
+                            icon?.mutate()?.setTint(color)
                             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                             setOnMarkerClickListener { _, _ ->
                                 selectedSpot = s
@@ -260,7 +260,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 mapViewRef?.let { mv ->
                     locOverlay?.enableMyLocation()
                     locOverlay?.enableFollowLocation()
-                    locOverlay?.myLocation?.let { mv.controller.animateTo(it) }
+                    locOverlay?.myLocation?.let { mv.controller.animateTo(it, 16.0, 800L) }
                 }
             }
             MapFab(Icons.Default.Layers, if (layerHiking) "Ebenen: Topo an" else "Ebenen: Topo aus", MaterialTheme.colorScheme.secondary) {
@@ -337,7 +337,9 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                             TextButton(onClick = { photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) { Text("🖼 Geo-Daten aus Foto") }
                         }
                         spotCoord?.let {
+                            val insideNow = repo.isInsidePolygon(it.latitude, it.longitude, region)
                             Text("📍 ${"%.5f".format(it.latitude)}, ${"%.5f".format(it.longitude)}", style = MaterialTheme.typography.labelSmall)
+                            if (!insideNow) Text("⚠ Außerhalb des Projektgebiets — Spot kann nicht gespeichert werden.", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium)
                         }
                         OutlinedTextField(title, { title = it }, label = { Text("Titel *") }, singleLine = true)
                         OutlinedTextField(desc, { desc = it }, label = { Text("Beschreibung (optional)") }, minLines = 2)
