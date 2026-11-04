@@ -129,6 +129,7 @@ fun AreaDetailScreen(
             } else {
                 ForumList(
                     forums = forums,
+                    selectedForum = selectedForum,
                     onSelectForum = { fid ->
                         scope.launch {
                             selectedForum = fid

@@ -3,6 +3,7 @@ package de.naturfoto.app.map
 import de.naturfoto.app.data.Supabase
 import de.naturfoto.app.data.jsonOf
 import de.naturfoto.app.data.str
+import de.naturfoto.app.data.textOrNull
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -20,8 +21,8 @@ class MapRepository {
         val list = (arr as? kotlinx.serialization.json.JsonArray) ?: return emptyList()
         return list.mapNotNull { el ->
             val pair = (el as? kotlinx.serialization.json.JsonArray) ?: return@mapNotNull null
-            val lat = (pair.getOrNull(0) as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull?.toDoubleOrNull()
-            val lng = (pair.getOrNull(1) as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull?.toDoubleOrNull()
+            val lat = pair.getOrNull(0)?.textOrNull?.toDoubleOrNull()
+            val lng = pair.getOrNull(1)?.textOrNull?.toDoubleOrNull()
             if (lat != null && lng != null) lat to lng else null
         }
     }
