@@ -42,7 +42,7 @@ import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
 
 @Composable
-fun ProfileScreen(modifier: Modifier = Modifier) {
+fun ProfileScreen(projectId: String, modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val userId = Supabase.client.auth.currentUserOrNull()?.id
 
@@ -131,8 +131,28 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
             Switch(showSocialsPublicly, { showSocialsPublicly = it })
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("eBird-Sichtungen aktivieren (eigener API-Key lokal)")
+            Text("eBird-Sichtungen aktivieren (Opt-in)")
             Switch(ebirdEnabled, { ebirdEnabled = it })
+        }
+        if (ebirdEnabled) {
+            var exporting by remember { mutableStateOf(false) }
+            Button(
+                enabled = !exporting,
+                onClick = {
+                    exporting = true
+                    scope.launch {
+                        try {
+                            val spots = de.naturfoto.app.map.MapRepository().listSpots(projectId)
+                            val csv = de.naturfoto.app.ebird.EBirdExporter.toCsv(spots)
+                            shareCsvFile("ebird_export.csv", csv)
+                        } catch (e: Exception) {
+                            error = e.message
+                        } finally {
+                            exporting = false
+                        }
+                    }
+                },
+            ) { Text(if (exporting) "Exportiere…" else "Meine Locations als eBird-CSV teilen") }
         }
 
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }

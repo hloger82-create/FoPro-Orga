@@ -112,7 +112,10 @@ fun NaturfotoApp() {
                         val pid = projectId
                         if (pid != null) ProjectMap(projectId = pid, modifier = Modifier) else PlaceholderScreen("Projekt wird geladen…")
                     }
-                    Tab.PROFILE -> ProfileScreen(modifier = Modifier)
+                    Tab.PROFILE -> {
+                        val pid = projectId
+                        if (pid != null) ProfileScreen(projectId = pid, modifier = Modifier) else PlaceholderScreen("Projekt wird geladen…")
+                    }
                     Tab.SURVEYS -> {
                         val pid = projectId
                         if (pid != null) SurveysScreen(projectId = pid) else PlaceholderScreen("Projekt wird geladen…")
