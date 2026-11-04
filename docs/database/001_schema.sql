@@ -235,6 +235,7 @@ create table if not exists public.map_spots (
     photo_url text,
     exif jsonb,
     visibility text not null default 'project' check (visibility in ('project','area_only','private')),
+    area_id uuid references public.areas(id) on delete set null,
     created_at timestamptz not null default now()
 );
 

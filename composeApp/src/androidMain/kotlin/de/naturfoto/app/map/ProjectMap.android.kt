@@ -1,9 +1,15 @@
 package de.naturfoto.app.map
 
+import android.graphics.BitmapFactory
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.exifinterface.media.ExifInterface
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,6 +21,10 @@ import androidx.compose.material.icons.filled.EditLocation
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -35,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import de.naturfoto.app.data.str
@@ -54,9 +65,12 @@ import org.osmdroid.views.overlay.Polygon
 actual fun ProjectMap(projectId: String, modifier: Modifier) {
     val repo = remember { MapRepository() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     var region by remember { mutableStateOf<List<Pair<Double, Double>>>(emptyList()) }
     var spots by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var areas by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var authors by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var pending by remember { mutableStateOf<GeoPoint?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var admin by remember { mutableStateOf(false) }
@@ -65,51 +79,97 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
     var locOverlay by remember { mutableStateOf<org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay?>(null) }
 
+    // Spot-Dialog
+    var showSpotDialog by remember { mutableStateOf(false) }
+    var spotMode by remember { mutableStateOf<SpotMode?>(null) } // null = Auswahl, MAP_PICK = warte auf Karten-Tap
+    var spotCoord by remember { mutableStateOf<GeoPoint?>(null) }
     var title by remember { mutableStateOf("") }
     var desc by remember { mutableStateOf("") }
     var visibility by remember { mutableStateOf("project") }
+    var spotArea by remember { mutableStateOf<String?>(null) }
+    var photoBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var exif by remember { mutableStateOf<Map<String, String>?>(null) }
+    var areaMenuOpen by remember { mutableStateOf(false) }
+
+    // Spot-Detail
+    var selectedSpot by remember { mutableStateOf<JsonObject?>(null) }
+
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            scope.launch {
+                try {
+                    val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    photoBytes = bytes
+                    val ex = mutableMapOf<String, String>()
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        ExifInterface(stream).let { e ->
+                            e.getAttribute(ExifInterface.TAG_GPS_LATITUDE)?.let { ex["gps_latitude"] = it }
+                            e.getAttribute(ExifInterface.TAG_GPS_LONGITUDE)?.let { ex["gps_longitude"] = it }
+                            e.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL)?.let { ex["datetime"] = it }
+                            e.getAttribute(ExifInterface.TAG_MODEL)?.let { ex["camera"] = it }
+                        }
+                    }
+                    // GPS aus EXIF in Dezimalgrad umrechnen
+                    val latRef = ex["gps_latitude"]
+                    if (latRef != null) {
+                        val parts = latRef.split(",").map { it.trim() }
+                        val lat = parts[0].toDouble() + parts[1].toDouble() / 60.0 + parts[2].toDouble() / 3600.0
+                        val lon = ex["gps_longitude"]?.split(",")?.map { it.trim() }?.let {
+                            it[0].toDouble() + it[1].toDouble() / 60.0 + it[2].toDouble() / 3600.0
+                        }
+                        if (lon != null) {
+                            spotCoord = GeoPoint(lat, lon)
+                            exif = ex
+                        }
+                    }
+                } catch (e: Exception) {
+                    error = "Foto/EXIF: ${e.message}"
+                }
+            }
+        }
+    }
+
+    fun loadSpots() {
+        scope.launch {
+            try {
+                spots = repo.listSpots(projectId)
+                authors = spots.map { it.str("author_id") }.distinct().associateWith { repo.authorName(it) }
+            } catch (e: Exception) { error = e.message }
+        }
+    }
 
     LaunchedEffect(projectId) {
         try {
             region = repo.projectRegion(projectId)
-            spots = repo.listSpots(projectId)
+            areas = repo.listAreas(projectId)
             admin = repo.isAdmin(projectId)
-        } catch (e: Exception) {
-            error = e.message
-        }
+        } catch (e: Exception) { error = e.message }
+        loadSpots()
     }
 
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
-            factory = { context ->
-                MapView(context).apply {
+            factory = { ctx ->
+                MapView(ctx).apply {
                     setTileSource(TileSourceFactory.MAPNIK)
                     setMultiTouchControls(true)
                     controller.setZoom(6.0)
                     controller.setCenter(GeoPoint(51.1657, 10.4515))
                     locOverlay = org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay(
-                        org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider(context), this,
+                        org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider(ctx), this,
                     ).apply { disableMyLocation() }
                     overlays.add(locOverlay!!)
-                    if (region.size >= 3) {
-                        overlays.add(
-                            Polygon().apply {
-                                points = region.map { GeoPoint(it.first, it.second) }
-                                outlinePaint.color = 0xFF7FB069.toInt()
-                                outlinePaint.strokeWidth = 6f
-                                setFillColor(0x227FB069)
-                            },
-                        )
-                    }
                     overlays.add(
                         MapEventsOverlay(
                             object : MapEventsReceiver {
                                 override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
-                                    if (p != null) pending = p
+                                    if (p != null && spotMode == SpotMode.MAP_PICK) {
+                                        spotCoord = p
+                                        spotMode = null
+                                    }
                                     return true
                                 }
-
                                 override fun longPressHelper(p: GeoPoint?): Boolean = false
                             },
                         ),
@@ -130,6 +190,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                     )
                 }
                 spots.forEach { s ->
+                    val color = repo.areaColor(s.str("area_id").ifBlank { null })
                     mapView.overlays.add(
                         Marker(mapView).apply {
                             position = GeoPoint(
@@ -137,7 +198,12 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                                 s.str("lng").toDoubleOrNull() ?: 0.0,
                             )
                             title = s.str("title")
+                            icon = android.graphics.drawable.ColorDrawable(color)
                             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                            setOnMarkerClickListener { _, _ ->
+                                selectedSpot = s
+                                true
+                            }
                         },
                     )
                 }
@@ -160,7 +226,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                     .padding(horizontal = 16.dp, vertical = 12.dp),
             ) {
                 Text(
-                    if (region.size >= 3) "Projektgebiet: ${region.size} Grenzpunkte · ${spots.size} Spots" else "Kein Projektgebiet festgelegt · ${spots.size} Spots",
+                    if (region.size >= 3) "Projektgebiet: ${region.size} Grenzpunkte · ${spots.size} Locations" else "Kein Projektgebiet · ${spots.size} Locations",
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
@@ -174,61 +240,51 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (admin) {
-                MapFab(
-                    icon = Icons.Default.EditLocation,
-                    label = "Gebiet bearbeiten",
-                    color = MaterialTheme.colorScheme.secondary,
-                    onClick = { editingRegion = true },
-                )
+                MapFab(Icons.Default.EditLocation, "Gebiet bearbeiten", MaterialTheme.colorScheme.secondary) { editingRegion = true }
             }
-            MapFab(
-                icon = Icons.Default.MyLocation,
-                label = "Mein Standort",
-                color = MaterialTheme.colorScheme.secondary,
-                onClick = {
-                    mapViewRef?.let { mv ->
-                        locOverlay?.enableMyLocation()
-                        locOverlay?.enableFollowLocation()
-                        locOverlay?.myLocation?.let { mv.controller.animateTo(it) }
-                    }
-                },
-            )
-            MapFab(
-                icon = Icons.Default.Layers,
-                label = if (layerHiking) "Ebenen: Topo an" else "Ebenen: Topo aus",
-                color = MaterialTheme.colorScheme.secondary,
-                onClick = {
-                    layerHiking = !layerHiking
-                    mapViewRef?.setTileSource(
-                        if (layerHiking) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK,
-                    )
-                },
-            )
-            MapFab(
-                icon = Icons.Default.AddLocationAlt,
-                label = "Spot melden",
-                color = MaterialTheme.colorScheme.primary,
-                onClick = { pending = GeoPoint(51.1657, 10.4515) },
-            )
+            MapFab(Icons.Default.MyLocation, "Mein Standort", MaterialTheme.colorScheme.secondary) {
+                mapViewRef?.let { mv ->
+                    locOverlay?.enableMyLocation()
+                    locOverlay?.enableFollowLocation()
+                    locOverlay?.myLocation?.let { mv.controller.animateTo(it) }
+                }
+            }
+            MapFab(Icons.Default.Layers, if (layerHiking) "Ebenen: Topo an" else "Ebenen: Topo aus", MaterialTheme.colorScheme.secondary) {
+                layerHiking = !layerHiking
+                mapViewRef?.setTileSource(if (layerHiking) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK)
+            }
+            MapFab(Icons.Default.AddLocationAlt, "Location eintragen", MaterialTheme.colorScheme.primary) {
+                showSpotDialog = true
+                spotMode = null
+                spotCoord = null
+                title = ""
+                desc = ""
+                spotArea = null
+                photoBytes = null
+                exif = null
+            }
+        }
+
+        if (spotMode == SpotMode.MAP_PICK) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 90.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(translucentSurface())
+                    .padding(12.dp),
+            ) {
+                Text("Tippe auf die Karte, um die Location zu wählen")
+            }
         }
 
         if (editingRegion) {
             androidx.compose.ui.window.Dialog(onDismissRequest = { editingRegion = false }) {
-                androidx.compose.material3.Card(
-                    modifier = Modifier.fillMaxWidth().height(520.dp),
-                    shape = RoundedCornerShape(16.dp),
-                ) {
+                Card(modifier = Modifier.fillMaxWidth().height(520.dp), shape = RoundedCornerShape(16.dp)) {
                     Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
                         Text("Projektgebiet festlegen", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(8.dp))
-                        RegionEditor(
-                            currentPolygon = region,
-                            onPolygonChanged = { region = it },
-                            modifier = Modifier.fillMaxWidth().height(400.dp),
-                        )
-                        androidx.compose.foundation.layout.Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                        ) {
+                        RegionEditor(currentPolygon = region, onPolygonChanged = { region = it }, modifier = Modifier.fillMaxWidth().height(400.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             TextButton(onClick = { editingRegion = false }) { Text("Abbrechen") }
                             TextButton(onClick = {
                                 scope.launch {
@@ -242,24 +298,44 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
             }
         }
 
-        if (pending != null) {
-            val p = pending!!
-            val inside = repo.isInsidePolygon(p.latitude, p.longitude, region)
+        if (showSpotDialog) {
             AlertDialog(
-                onDismissRequest = { pending = null },
-                title = { Text("Spot melden") },
+                onDismissRequest = { showSpotDialog = false },
+                title = { Text("Location eintragen") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (!inside) {
-                            Text(
-                                "⚠ Außerhalb des Projektgebiets — Spot wird abgelehnt.",
-                                color = MaterialTheme.colorScheme.error,
-                            )
+                        if (spotMode == null && spotCoord == null) {
+                            Text("Koordinaten bestimmen:", style = MaterialTheme.typography.labelMedium)
+                            TextButton(onClick = {
+                                locOverlay?.enableMyLocation()
+                                locOverlay?.myLocation?.let { spotCoord = it }
+                                    ?: run { error = "Kein GPS-Fix — im Emulator: Extended Controls → Location setzen" }
+                            }) { Text("📍 Mein Standort") }
+                            TextButton(onClick = { spotMode = SpotMode.MAP_PICK }) { Text("🗺 Auf Karte auswählen") }
+                            TextButton(onClick = { photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) { Text("🖼 Geo-Daten aus Foto") }
                         }
-                        Text("📍 ${"%.5f".format(p.latitude)}, ${"%.5f".format(p.longitude)}", style = MaterialTheme.typography.labelSmall)
-                        OutlinedTextField(title, { title = it }, label = { Text("Titel") }, singleLine = true)
-                        OutlinedTextField(desc, { desc = it }, label = { Text("Beschreibung") })
-                        androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        spotCoord?.let {
+                            Text("📍 ${"%.5f".format(it.latitude)}, ${"%.5f".format(it.longitude)}", style = MaterialTheme.typography.labelSmall)
+                        }
+                        OutlinedTextField(title, { title = it }, label = { Text("Titel *") }, singleLine = true)
+                        OutlinedTextField(desc, { desc = it }, label = { Text("Beschreibung (optional)") }, minLines = 2)
+                        ExposedDropdownMenuBox(expanded = areaMenuOpen, onExpandedChange = { areaMenuOpen = it }) {
+                            OutlinedTextField(
+                                value = areas.firstOrNull { it.str("id") == spotArea }?.str("name") ?: "Keine Area",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Area (optional)") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(areaMenuOpen) },
+                                modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            )
+                            androidx.compose.material3.DropdownMenu(expanded = areaMenuOpen, onDismissRequest = { areaMenuOpen = false }) {
+                                DropdownMenuItem(text = { Text("Keine Area") }, onClick = { spotArea = null; areaMenuOpen = false })
+                                areas.forEach { a ->
+                                    DropdownMenuItem(text = { Text(a.str("name")) }, onClick = { spotArea = a.str("id"); areaMenuOpen = false })
+                                }
+                            }
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(selected = visibility == "project", onClick = { visibility = "project" }, label = { Text("Projekt") })
                             FilterChip(selected = visibility == "area_only", onClick = { visibility = "area_only" }, label = { Text("Nur Area") })
                             FilterChip(selected = visibility == "private", onClick = { visibility = "private" }, label = { Text("Privat") })
@@ -268,8 +344,14 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 },
                 confirmButton = {
                     TextButton(
-                        enabled = title.isNotBlank() && inside,
+                        enabled = title.isNotBlank() && spotCoord != null,
                         onClick = {
+                            val p = spotCoord!!
+                            val inside = repo.isInsidePolygon(p.latitude, p.longitude, region)
+                            if (!inside) {
+                                error = "Außerhalb des Projektgebiets — nicht speicherbar."
+                                return@TextButton
+                            }
                             scope.launch {
                                 try {
                                     repo.createSpot(
@@ -278,26 +360,43 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                                         description = desc.trim().ifBlank { null },
                                         lat = p.latitude,
                                         lng = p.longitude,
-                                        photoBytes = null,
-                                        exif = null,
+                                        photoBytes = photoBytes,
+                                        exif = exif,
                                         visibility = visibility,
+                                        areaId = spotArea,
                                     )
-                                    pending = null
-                                    title = ""
-                                    desc = ""
-                                    spots = repo.listSpots(projectId)
-                                } catch (e: Exception) {
-                                    error = e.message
-                                }
+                                    showSpotDialog = false
+                                    loadSpots()
+                                } catch (e: Exception) { error = e.message }
                             }
                         },
                     ) { Text("Speichern") }
                 },
-                dismissButton = { TextButton(onClick = { pending = null }) { Text("Abbrechen") } },
+                dismissButton = { TextButton(onClick = { showSpotDialog = false; spotMode = null }) { Text("Abbrechen") } },
+            )
+        }
+
+        selectedSpot?.let { s ->
+            AlertDialog(
+                onDismissRequest = { selectedSpot = null },
+                title = { Text(s.str("title")) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Von: ${authors[s.str("author_id")] ?: "…"}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+                        s.str("description").ifBlank { null }?.let { Text(it) }
+                        Text("📍 ${s.str("lat")}, ${s.str("lng")}", style = MaterialTheme.typography.labelSmall)
+                        val areaName = areas.firstOrNull { it.str("id") == s.str("area_id") }?.str("name")
+                        if (areaName != null) Text("Area: $areaName", style = MaterialTheme.typography.labelSmall)
+                        Text("Sichtbarkeit: ${s.str("visibility")}", style = MaterialTheme.typography.labelSmall)
+                    }
+                },
+                confirmButton = { TextButton(onClick = { selectedSpot = null }) { Text("Schließen") } },
             )
         }
     }
 }
+
+private enum class SpotMode { MAP_PICK }
 
 @Composable
 private fun MapFab(
@@ -307,11 +406,7 @@ private fun MapFab(
     onClick: () -> Unit,
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        FloatingActionButton(
-            onClick = onClick,
-            containerColor = translucentSurface(),
-            contentColor = color,
-        ) {
+        FloatingActionButton(onClick = onClick, containerColor = translucentSurface(), contentColor = color) {
             Icon(icon, contentDescription = label)
         }
         Text(

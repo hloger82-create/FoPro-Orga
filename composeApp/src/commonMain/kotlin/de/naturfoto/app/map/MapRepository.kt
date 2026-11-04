@@ -72,6 +72,38 @@ class MapRepository {
         }.decodeList<JsonObject>()
             .filter { it.str("visibility") != "private" || it.str("author_id") == userId }
 
+    suspend fun listAreas(projectId: String): List<JsonObject> =
+        db["areas"].select {
+            filter { eq("project_id", projectId) }
+            order("name", Order.ASCENDING)
+        }.decodeList<JsonObject>()
+
+    suspend fun authorName(userId: String): String =
+        db["profiles"].select { filter { eq("id", userId) } }
+            .decodeList<JsonObject>().firstOrNull()?.str("display_name")?.ifBlank { null } ?: "Unbekannt"
+
+    /** Deterministische Farbe pro Area (aus der ID), weiß wenn keine Area */
+    fun areaColor(areaId: String?): Int {
+        if (areaId.isNullOrBlank()) return 0xFFFFFFFF.toInt()
+        var h = 0
+        for (c in areaId) h = 31 * h + c.code
+        val hue = (((h % 360) + 360) % 360).toFloat()
+        val c = 0.65f
+        val x = c * (1 - kotlin.math.abs((hue / 60f) % 2 - 1))
+        val m = 0.25f
+        val (r, g, b) = when (hue) {
+            in 0f..60f -> Triple(c, x, 0f)
+            in 60f..120f -> Triple(x, c, 0f)
+            in 120f..180f -> Triple(0f, c, x)
+            in 180f..240f -> Triple(0f, x, c)
+            in 240f..300f -> Triple(x, 0f, c)
+            else -> Triple(c, 0f, x)
+        }
+        return (0xFF shl 24) or ((r + m).coerceIn(0f, 1f) * 255).toInt() shl 16 or
+                ((g + m).coerceIn(0f, 1f) * 255).toInt() shl 8 or
+                ((b + m).coerceIn(0f, 1f) * 255).toInt()
+    }
+
     suspend fun createSpot(
         projectId: String,
         title: String,
@@ -81,6 +113,7 @@ class MapRepository {
         photoBytes: ByteArray?,
         exif: Map<String, String>?,
         visibility: String,
+        areaId: String? = null,
     ): String {
         var photoUrl: String? = null
         if (photoBytes != null) {
@@ -100,6 +133,7 @@ class MapRepository {
                 "photo_url" to photoUrl,
                 "exif" to exifJson,
                 "visibility" to visibility,
+                "area_id" to areaId,
             ),
         )
         return photoUrl ?: ""
