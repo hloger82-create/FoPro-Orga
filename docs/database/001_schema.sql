@@ -247,6 +247,7 @@ create table if not exists public.surveys (
     question text not null,
     options jsonb not null,
     multiple_choice boolean not null default false,
+    ends_at timestamptz,
     created_by uuid not null references public.profiles(id),
     created_at timestamptz not null default now()
 );

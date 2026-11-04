@@ -58,6 +58,8 @@ fun SurveysScreen(
     var question by remember { mutableStateOf("") }
     var optionsText by remember { mutableStateOf("") }
     var multiple by remember { mutableStateOf(false) }
+    var dateText by remember { mutableStateOf("") }
+    var timeText by remember { mutableStateOf("") }
 
     fun load() {
         scope.launch {
@@ -93,13 +95,21 @@ fun SurveysScreen(
                     val my = myVotes[id] ?: emptySet()
                     val c = counts[id] ?: emptyMap()
                     val total = c.values.sum().coerceAtLeast(1)
+                    val nowIso = kotlinx.datetime.Clock.System.now().toString()
+                    val expired = repo.isExpired(s, nowIso)
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(s.str("question"), style = MaterialTheme.typography.titleMedium)
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text(s.str("question"), style = MaterialTheme.typography.titleMedium)
+                                if (expired) Text("abgelaufen", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                            }
+                            s.str("ends_at").ifBlank { null }?.let {
+                                Text("endet ${it.take(16).replace('T', ' ')}", style = MaterialTheme.typography.labelSmall)
+                            }
                             Text(
                                 if (s.str("scope") == "area") "Area-Umfrage" else "Projekt-Umfrage",
                                 style = MaterialTheme.typography.labelSmall,
@@ -112,6 +122,7 @@ fun SurveysScreen(
                                     if (s.bool("multiple_choice")) {
                                         Checkbox(
                                             checked = selected,
+                                            enabled = !expired,
                                             onCheckedChange = { checked ->
                                                 val next = if (checked) my + idx else my - idx
                                                 myVotes = myVotes + (id to next)
@@ -122,7 +133,11 @@ fun SurveysScreen(
                                             },
                                         )
                                     } else {
-                                        RadioButton(selected = selected, onClick = { scope.launch { repo.setVote(id, listOf(idx)); myVotes = myVotes + (id to setOf(idx)); counts = counts + (id to repo.voteCounts(id)) } })
+                                        RadioButton(
+                                            selected = selected,
+                                            enabled = !expired,
+                                            onClick = { scope.launch { repo.setVote(id, listOf(idx)); myVotes = myVotes + (id to setOf(idx)); counts = counts + (id to repo.voteCounts(id)) } },
+                                        )
                                     }
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(opt, style = MaterialTheme.typography.bodyMedium)
@@ -148,6 +163,10 @@ fun SurveysScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(question, { question = it }, label = { Text("Frage") }, singleLine = true)
                         OutlinedTextField(optionsText, { optionsText = it }, label = { Text("Optionen (eine pro Zeile)") }, minLines = 3)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(dateText, { dateText = it.filter(Char::isDigit).take(6) }, label = { Text("Datum DDMMYY") }, modifier = Modifier.weight(1f), singleLine = true)
+                            OutlinedTextField(timeText, { timeText = it.filter { c -> c.isDigit() || c == ':' }.take(5) }, label = { Text("Uhrzeit hh:MM") }, modifier = Modifier.weight(1f), singleLine = true)
+                        }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Mehrfachauswahl")
                             Switch(multiple, { multiple = it })
@@ -156,10 +175,13 @@ fun SurveysScreen(
                 },
                 confirmButton = {
                     TextButton(
-                        enabled = question.isNotBlank() && optionsText.lines().count { it.isNotBlank() } >= 2,
+                        enabled = question.isNotBlank() && optionsText.lines().count { it.isNotBlank() } >= 2
+                                && (dateText.isBlank() || dateText.matches(Regex("\\d{6}"))) && (timeText.isBlank() || timeText.matches(Regex("\\d{2}:\\d{2}")))
+                                && !(dateText.isNotBlank() && timeText.isBlank()) && !(dateText.isBlank() && timeText.isNotBlank()),
                         onClick = {
                             scope.launch {
                                 try {
+                                    val endsAt = parseDeadline(dateText.trim(), timeText.trim())
                                     repo.createSurvey(
                                         projectId = projectId,
                                         scope = "project",
@@ -167,10 +189,13 @@ fun SurveysScreen(
                                         question = question.trim(),
                                         options = optionsText.lines().map { it.trim() }.filter { it.isNotEmpty() },
                                         multipleChoice = multiple,
+                                        endsAt = endsAt,
                                     )
                                     showCreate = false
                                     question = ""
                                     optionsText = ""
+                                    dateText = ""
+                                    timeText = ""
                                     load()
                                 } catch (e: Exception) {
                                     error = e.message
@@ -183,5 +208,16 @@ fun SurveysScreen(
             )
         }
     }
+}
+
+private fun parseDeadline(dateText: String, timeText: String): String? {
+    if (dateText.length != 6 || timeText.length != 5) return null
+    val dd = dateText.substring(0, 2).toIntOrNull() ?: return null
+    val mm = dateText.substring(2, 4).toIntOrNull() ?: return null
+    val yy = dateText.substring(4, 6).toIntOrNull() ?: return null
+    val hh = timeText.substring(0, 2).toIntOrNull() ?: return null
+    val mi = timeText.substring(3, 5).toIntOrNull() ?: return null
+    if (mm !in 1..12 || dd !in 1..31 || hh > 23 || mi > 59) return null
+    return "%04d-%02d-%02dT%02d:%02d:00+01:00".format(2000 + yy, mm, dd, hh, mi)
 }
 

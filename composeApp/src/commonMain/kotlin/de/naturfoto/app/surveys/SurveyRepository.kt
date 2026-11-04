@@ -27,6 +27,7 @@ class SurveyRepository {
         question: String,
         options: List<String>,
         multipleChoice: Boolean,
+        endsAt: String?,
     ) {
         db["surveys"].insert(
             jsonOf(
@@ -36,9 +37,15 @@ class SurveyRepository {
                 "question" to question,
                 "options" to options,
                 "multiple_choice" to multipleChoice,
+                "ends_at" to endsAt,
                 "created_by" to (userId ?: ""),
             ),
         )
+    }
+
+    fun isExpired(survey: JsonObject, nowIso: String): Boolean {
+        val ends = survey.str("ends_at")
+        return ends.isNotBlank() && ends < nowIso
     }
 
     suspend fun myVotes(surveyId: String): Set<Int> =
