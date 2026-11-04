@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.weight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -92,17 +90,15 @@ actual fun RegionEditor(
     var query by remember { mutableStateOf("") }
 
     Column(modifier = modifier) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
                 label = { Text("Region suchen (z. B. Hannover, Hessen)") },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
             )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = {
                 scope.launch {
                     searchRegion(query)?.let {
@@ -116,6 +112,7 @@ actual fun RegionEditor(
                 drawn = emptyList()
                 onPolygonChanged(emptyList())
             }) { Text("Löschen") }
+            }
         }
         Text(
             "Tippe auf die Karte, um das Gebiet zu zeichnen (mind. 3 Punkte), oder nutze die Suche.",
