@@ -69,8 +69,8 @@ fun EBirdScreen(
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("eBird-Meldungen im Projektgebiet", style = MaterialTheme.typography.headlineSmall)
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            SegmentedButton(selected = !mode, onClick = { mode = false }, shape = androidx.compose.material3.SegmentedButtonDefaults.ItemShape(0, 2), label = { Text("In der Nähe") })
-            SegmentedButton(selected = mode, onClick = { mode = true }, shape = androidx.compose.material3.SegmentedButtonDefaults.ItemShape(1, 2), label = { Text("Selten") })
+            SegmentedButton(selected = !mode, onClick = { mode = false }, shape = androidx.compose.material3.SegmentedButtonDefaults.itemShape(0, 2), label = { Text("In der Nähe") })
+            SegmentedButton(selected = mode, onClick = { mode = true }, shape = androidx.compose.material3.SegmentedButtonDefaults.itemShape(1, 2), label = { Text("Selten") })
         }
         if (loading) Text("Lade…")
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
