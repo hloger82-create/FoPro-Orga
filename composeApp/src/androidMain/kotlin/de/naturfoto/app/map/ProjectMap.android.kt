@@ -63,6 +63,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
     var editingRegion by remember { mutableStateOf(false) }
     var layerHiking by remember { mutableStateOf(false) }
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
+    var locOverlay by remember { mutableStateOf<org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay?>(null) }
 
     var title by remember { mutableStateOf("") }
     var desc by remember { mutableStateOf("") }
@@ -87,11 +88,10 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                     setMultiTouchControls(true)
                     controller.setZoom(6.0)
                     controller.setCenter(GeoPoint(51.1657, 10.4515))
-                    myLocationOverlay = org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider(this).let {
-                        org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay(it, this).apply {
-                            disableMyLocation()
-                        }
-                    }.also { overlays.add(it) }
+                    locOverlay = org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay(
+                        org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider(context), this,
+                    ).apply { disableMyLocation() }
+                    overlays.add(locOverlay!!)
                     if (region.size >= 3) {
                         overlays.add(
                             Polygon().apply {
@@ -187,10 +187,9 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 color = MaterialTheme.colorScheme.secondary,
                 onClick = {
                     mapViewRef?.let { mv ->
-                        val loc = mv.myLocationOverlay
-                        loc.enableMyLocation()
-                        loc.enableFollowLocation()
-                        loc.myLocation?.let { mv.controller.animateTo(it) }
+                        locOverlay?.enableMyLocation()
+                        locOverlay?.enableFollowLocation()
+                        locOverlay?.myLocation?.let { mv.controller.animateTo(it) }
                     }
                 },
             )
