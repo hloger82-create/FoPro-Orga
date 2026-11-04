@@ -79,6 +79,10 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
     var mapViewRef by remember { mutableStateOf<MapView?>(null) }
     var locOverlay by remember { mutableStateOf<org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay?>(null) }
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted -> if (granted) locOverlay?.enableMyLocation() }
+
     // Spot-Dialog
     var showSpotDialog by remember { mutableStateOf(false) }
     var spotMode by remember { mutableStateOf<SpotMode?>(null) } // null = Auswahl, MAP_PICK = warte auf Karten-Tap
@@ -182,7 +186,9 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 mapView.overlays.removeAll { it is Marker || it is Polygon }
                 if (region.size >= 3) {
                     mapView.overlays.add(
-                        Polygon().apply {
+                        object : Polygon() {
+                            override fun onSingleTapUp(e: android.view.MotionEvent, mapView: MapView): Boolean = false
+                        }.apply {
                             points = region.map { GeoPoint(it.first, it.second) }
                             outlinePaint.color = 0xFF7FB069.toInt()
                             outlinePaint.strokeWidth = 6f
@@ -308,6 +314,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                         if (spotMode == null && spotCoord == null) {
                             Text("Koordinaten bestimmen:", style = MaterialTheme.typography.labelMedium)
                             TextButton(onClick = {
+                                permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                                 locOverlay?.enableMyLocation()
                                 scope.launch {
                                     repeat(10) {
