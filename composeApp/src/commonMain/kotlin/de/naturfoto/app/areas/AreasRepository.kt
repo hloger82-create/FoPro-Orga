@@ -40,6 +40,9 @@ class AreasRepository {
         db["forums"].select { filter { eq("area_id", areaId) } }
             .decodeList<kotlinx.serialization.json.JsonObject>()
 
+    suspend fun forumForArea(areaId: String): String? =
+        listForums(areaId).firstOrNull()?.str("id")
+
     suspend fun createForum(areaId: String, name: String) {
         db["forums"].insert(
             jsonOf(
@@ -100,13 +103,15 @@ class AreasRepository {
             order("created_at", Order.ASCENDING)
         }.decodeList<kotlinx.serialization.json.JsonObject>()
 
-    suspend fun addComment(postId: String? = null, threadId: String? = null, body: String) {
+    suspend fun addComment(postId: String? = null, threadId: String? = null, body: String, replyTo: String? = null, quotedText: String? = null) {
         db["post_comments"].insert(
             jsonOf(
                 "post_id" to postId,
                 "thread_id" to threadId,
                 "author_id" to (userId ?: ""),
                 "body" to body,
+                "reply_to" to replyTo,
+                "quoted_text" to quotedText,
             ),
         )
     }

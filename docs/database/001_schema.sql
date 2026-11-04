@@ -67,6 +67,18 @@ drop trigger if exists on_project_created on public.projects;
 create trigger on_project_created after insert on public.projects
     for each row execute function public.handle_new_project();
 
+-- Ein unsichtbares Standard-Forum pro Area (Threads leben direkt unter der Area)
+create or replace function public.handle_new_area_forum()
+returns trigger language plpgsql security definer as $$
+begin
+    insert into public.forums (area_id, name, created_by)
+    values (new.id, 'Forum', (select creator_id from public.projects where id = new.project_id));
+    return new;
+end; $$;
+drop trigger if exists on_area_forum_created on public.areas;
+create trigger on_area_forum_created after insert on public.areas
+    for each row execute function public.handle_new_area_forum();
+
 -- Allgemeiner Chat-Kanal pro Projekt
 create or replace function public.handle_new_project_channel()
 returns trigger language plpgsql security definer as $$
@@ -139,6 +151,8 @@ create table if not exists public.post_comments (
     thread_id uuid references public.threads(id) on delete cascade,
     author_id uuid not null references public.profiles(id),
     body text not null,
+    reply_to uuid references public.post_comments(id) on delete set null,
+    quoted_text text,
     created_at timestamptz not null default now(),
     check (post_id is not null or thread_id is not null)
 );

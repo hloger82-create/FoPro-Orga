@@ -1,8 +1,5 @@
 package de.naturfoto.app.areas
 
-import de.naturfoto.app.data.bool
-import de.naturfoto.app.data.str
-import kotlinx.serialization.json.JsonObject
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,7 +32,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import de.naturfoto.app.data.bool
+import de.naturfoto.app.data.str
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
 
 @Composable
 fun AreaDetailScreen(
@@ -47,18 +47,15 @@ fun AreaDetailScreen(
     val repo = remember { AreasRepository() }
     val scope = rememberCoroutineScope()
 
-    var tab by remember { mutableStateOf(0) } // 0 = Pinnwand, 1 = Foren
-    var forums by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var tab by remember { mutableStateOf(0) } // 0 = Pinnwand, 1 = Forum/Threads
+    var forumId by remember { mutableStateOf<String?>(null) }
     var posts by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var threads by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
-    var selectedForum by remember { mutableStateOf<String?>(null) }
     var selectedThread by remember { mutableStateOf<JsonObject?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
-    var showNewForum by remember { mutableStateOf(false) }
     var showNewPost by remember { mutableStateOf(false) }
     var showNewThread by remember { mutableStateOf(false) }
 
-    var forumName by remember { mutableStateOf("") }
     var postTitle by remember { mutableStateOf("") }
     var postBody by remember { mutableStateOf("") }
     var threadTitle by remember { mutableStateOf("") }
@@ -66,19 +63,15 @@ fun AreaDetailScreen(
 
     fun loadPosts() {
         scope.launch {
-            try {
-                posts = repo.listPosts(areaId, selectedForum)
-            } catch (e: Exception) {
-                error = e.message
-            }
+            try { posts = repo.listPosts(areaId, null) } catch (e: Exception) { error = e.message }
         }
     }
+
     LaunchedEffect(areaId) {
         try {
-            forums = repo.listForums(areaId)
-        } catch (e: Exception) {
-            error = e.message
-        }
+            forumId = repo.forumForArea(areaId)
+            if (forumId != null) threads = repo.listThreads(forumId!!)
+        } catch (e: Exception) { error = e.message }
         loadPosts()
     }
 
@@ -86,82 +79,34 @@ fun AreaDetailScreen(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                when {
-                    tab == 0 -> showNewPost = true
-                    selectedForum != null && selectedThread == null -> showNewThread = true
-                    else -> showNewForum = true
-                }
+                if (tab == 0) showNewPost = true else showNewThread = true
             }) {
                 Icon(Icons.Default.Add, contentDescription = "Neu")
             }
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            Text(areaName, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(16.dp))
+            TextButton(onClick = onBack) { Text("← $areaName") }
             TabRow(selectedTabIndex = tab) {
-                Tab(selected = tab == 0, onClick = { tab = 0; selectedForum = null; loadPosts() }, text = { Text("Pinnwand") })
-                Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Foren") })
+                Tab(selected = tab == 0, onClick = { tab = 0; selectedThread = null }, text = { Text("Pinnwand") })
+                Tab(selected = tab == 1, onClick = { tab = 1; selectedThread = null }, text = { Text("Forum") })
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
 
-            if (tab == 0) {
+            if (selectedThread != null) {
+                ThreadDetail(thread = selectedThread!!, repo = repo, onBack = { selectedThread = null })
+            } else if (tab == 0) {
                 PostList(posts, repo = repo, onDelete = { id ->
                     scope.launch {
                         try { repo.deletePost(id); loadPosts() } catch (e: Exception) { error = e.message }
                     }
                 })
-            } else if (selectedThread != null) {
-                ThreadDetail(
-                    thread = selectedThread!!,
-                    repo = repo,
-                    onBack = { selectedThread = null },
-                )
-            } else if (selectedForum != null) {
+            } else {
                 ThreadList(
                     threads = threads,
                     onOpenThread = { selectedThread = it },
-                    onBack = {
-                        selectedForum = null
-                        tab = 0
-                        loadPosts()
-                    },
-                )
-            } else {
-                ForumList(
-                    forums = forums,
-                    selectedForum = selectedForum,
-                    onSelectForum = { fid ->
-                        scope.launch {
-                            selectedForum = fid
-                            threads = repo.listThreads(fid)
-                        }
-                    },
                 )
             }
-        }
-
-        if (showNewForum) {
-            AlertDialog(
-                onDismissRequest = { showNewForum = false },
-                title = { Text("Neues Forum") },
-                text = { OutlinedTextField(forumName, { forumName = it }, label = { Text("Name") }, singleLine = true) },
-                confirmButton = {
-                    TextButton(
-                        enabled = forumName.isNotBlank(),
-                        onClick = {
-                            scope.launch {
-                                try {
-                                    repo.createForum(areaId, forumName.trim())
-                                    showNewForum = false
-                                    forumName = ""
-                                    forums = repo.listForums(areaId)
-                                } catch (e: Exception) { error = e.message }
-                            }
-                        },
-                    ) { Text("Erstellen") }
-                },
-                dismissButton = { TextButton(onClick = { showNewForum = false }) { Text("Abbrechen") } },
-            )
         }
 
         if (showNewThread) {
@@ -170,21 +115,21 @@ fun AreaDetailScreen(
                 title = { Text("Neuer Thread") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(threadTitle, { threadTitle = it }, label = { Text("Threadtitel (vorgegeben)") }, singleLine = true)
+                        OutlinedTextField(threadTitle, { threadTitle = it }, label = { Text("Threadtitel") }, singleLine = true)
                         OutlinedTextField(threadFirstPost, { threadFirstPost = it }, label = { Text("Erster Beitrag") }, minLines = 3)
                     }
                 },
                 confirmButton = {
                     TextButton(
-                        enabled = threadTitle.isNotBlank() && selectedForum != null,
+                        enabled = threadTitle.isNotBlank() && forumId != null,
                         onClick = {
                             scope.launch {
                                 try {
-                                    repo.createThread(selectedForum!!, threadTitle.trim(), threadFirstPost.trim())
+                                    repo.createThread(forumId!!, threadTitle.trim(), threadFirstPost.trim())
                                     showNewThread = false
                                     threadTitle = ""
                                     threadFirstPost = ""
-                                    threads = repo.listThreads(selectedForum!!)
+                                    threads = repo.listThreads(forumId!!)
                                 } catch (e: Exception) { error = e.message }
                             }
                         },
@@ -197,7 +142,7 @@ fun AreaDetailScreen(
         if (showNewPost) {
             AlertDialog(
                 onDismissRequest = { showNewPost = false },
-                title = { Text(if (selectedForum == null) "Neuer Pinnwand-Post" else "Neuer Beitrag") },
+                title = { Text("Neuer Pinnwand-Post") },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(postTitle, { postTitle = it }, label = { Text("Titel") }, singleLine = true)
@@ -210,7 +155,7 @@ fun AreaDetailScreen(
                         onClick = {
                             scope.launch {
                                 try {
-                                    repo.createPost(areaId, selectedForum, postTitle.trim(), postBody.trim())
+                                    repo.createPost(areaId, null, postTitle.trim(), postBody.trim())
                                     showNewPost = false
                                     postTitle = ""
                                     postBody = ""
@@ -265,6 +210,7 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
     val scope = rememberCoroutineScope()
     var comments by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var input by remember { mutableStateOf("") }
+    var replyTo by remember { mutableStateOf<JsonObject?>(null) }
     val key = postId ?: threadId ?: ""
 
     LaunchedEffect(key) {
@@ -272,7 +218,22 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        comments.forEach { c -> Text("• ${c.str("body")}", style = MaterialTheme.typography.bodySmall) }
+        comments.forEach { c ->
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                c.str("quoted_text").ifBlank { null }?.let {
+                    Text("❝ $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                }
+                Text("• ${c.str("body")}", style = MaterialTheme.typography.bodySmall)
+                TextButton(onClick = {
+                    replyTo = c
+                    input = "❝ ${c.str("body")}\n"
+                }) { Text("Antworten", style = MaterialTheme.typography.labelSmall) }
+            }
+        }
+        if (replyTo != null) {
+            Text("Antwort an: ${replyTo!!.str("body").take(40)}… ✕", style = MaterialTheme.typography.labelSmall,
+                modifier = Modifier.padding(4.dp))
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = input,
@@ -285,8 +246,15 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
                 enabled = input.isNotBlank(),
                 onClick = {
                     scope.launch {
-                        repo.addComment(postId = postId, threadId = threadId, body = input.trim())
+                        repo.addComment(
+                            postId = postId,
+                            threadId = threadId,
+                            body = input.trim(),
+                            replyTo = replyTo?.str("id"),
+                            quotedText = replyTo?.str("body"),
+                        )
                         input = ""
+                        replyTo = null
                         comments = repo.listComments(postId = postId, threadId = threadId)
                     }
                 },
@@ -299,26 +267,22 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
 private fun ThreadList(
     threads: List<JsonObject>,
     onOpenThread: (JsonObject) -> Unit,
-    onBack: () -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
-        TextButton(onClick = onBack) { Text("← Zurück zu den Foren") }
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items(threads, key = { it.str("id") }) { thread ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    onClick = { onOpenThread(thread) },
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(thread.str("title"), style = MaterialTheme.typography.titleMedium)
-                        Text(thread.str("first_post").take(120), style = MaterialTheme.typography.bodyMedium)
-                    }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        items(threads, key = { it.str("id") }) { thread ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                onClick = { onOpenThread(thread) },
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(thread.str("title"), style = MaterialTheme.typography.titleMedium)
+                    Text(thread.str("first_post").take(120), style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
@@ -332,7 +296,7 @@ private fun ThreadDetail(
     onBack: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TextButton(onClick = onBack) { Text("← Zurück") }
+        TextButton(onClick = onBack) { Text("← Zurück zu den Threads") }
         Text(thread.str("title"), style = MaterialTheme.typography.headlineSmall)
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -342,29 +306,5 @@ private fun ThreadDetail(
         }
         Text("Diskussion:", style = MaterialTheme.typography.titleSmall)
         CommentSection(repo = repo, threadId = thread.str("id"))
-    }
-}
-
-@Composable
-private fun ForumList(
-    forums: List<JsonObject>,
-    selectedForum: String?,
-    onSelectForum: (String) -> Unit,
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        items(forums, key = { it.str("id") }) { forum ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                onClick = { onSelectForum(forum.str("id")) },
-            ) {
-                Text(forum.str("name"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(16.dp))
-            }
-        }
     }
 }
