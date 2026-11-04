@@ -337,7 +337,6 @@ actual fun ProjectMap(
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             androidx.compose.material3.IconButton(
                 onClick = { scope.launch { drawerState.open() } },
-                modifier = Modifier.align(Alignment.TopStart),
             ) {
                 Icon(Icons.Default.Menu, contentDescription = "Filter öffnen", tint = MaterialTheme.colorScheme.onSurface)
             }

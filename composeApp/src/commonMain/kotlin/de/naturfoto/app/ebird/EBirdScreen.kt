@@ -76,7 +76,7 @@ fun EBirdScreen(
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(obs, key = { it.str("speciesCode") + it.str("obsDt") + it.str("lat") }) { o ->
-                Card(modifier = Modifier.fillMaxWidth(), onClick = {
+                Card(modifier = Modifier.fillMaxWidth(), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), onClick = {
                     o.str("lat").toDoubleOrNull()?.let { lat ->
                         o.str("lng").toDoubleOrNull()?.let { lng -> onOpenOnMap(lat, lng) }
                     }
