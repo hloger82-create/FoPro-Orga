@@ -1,11 +1,15 @@
 package de.naturfoto.app.areas
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -217,22 +221,42 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
         comments = repo.listComments(postId = postId, threadId = threadId)
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         comments.forEach { c ->
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            val isReply = c.str("reply_to").isNotBlank()
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.padding(start = if (isReply) 20.dp else 0.dp),
+            ) {
                 c.str("quoted_text").ifBlank { null }?.let {
-                    Text("❝ $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        androidx.compose.foundation.layout.Box(
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .fillMaxHeight()
+                                .width(3.dp)
+                                .background(MaterialTheme.colorScheme.secondary, RoundedCornerShape(2.dp)),
+                        )
+                        Text("❝ $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                    }
                 }
-                Text("• ${c.str("body")}", style = MaterialTheme.typography.bodySmall)
+                Text(c.str("body"), style = MaterialTheme.typography.bodyMedium)
                 TextButton(onClick = {
                     replyTo = c
-                    input = "❝ ${c.str("body")}\n"
-                }) { Text("Antworten", style = MaterialTheme.typography.labelSmall) }
+                    input = ""
+                }) { Text("↩ Antworten", style = MaterialTheme.typography.labelSmall) }
             }
         }
         if (replyTo != null) {
-            Text("Antwort an: ${replyTo!!.str("body").take(40)}… ✕", style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier.padding(4.dp))
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text("Antwort auf: ❝ ${replyTo!!.str("body").take(50)}${if (replyTo!!.str("body").length > 50) "…" else ""}")
+                    TextButton(onClick = { replyTo = null; input = "" }) { Text("✕") }
+                }
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
