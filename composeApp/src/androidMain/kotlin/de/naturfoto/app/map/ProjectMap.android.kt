@@ -516,6 +516,7 @@ actual fun ProjectMap(
             )
         }
     }
+    }
 }
 
 @Composable
