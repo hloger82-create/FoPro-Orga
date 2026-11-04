@@ -437,10 +437,12 @@ private fun MapFab(
             label,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
             modifier = Modifier
+                .height(18.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(translucentSurface(0.6f))
-                .padding(horizontal = 6.dp, vertical = 2.dp),
+                .padding(horizontal = 6.dp),
         )
     }
 }

@@ -1,6 +1,7 @@
 package de.naturfoto.app.areas
 
 import de.naturfoto.app.data.Supabase
+import de.naturfoto.app.data.bool
 import de.naturfoto.app.data.jsonOf
 import de.naturfoto.app.data.str
 import io.github.jan.supabase.auth.auth
@@ -32,6 +33,25 @@ class AreasRepository {
                 "project_id" to projectId,
                 "name" to name,
                 "description" to description,
+            ),
+        )
+    }
+
+    suspend fun isSubscribed(areaId: String): Boolean =
+        db["area_subscriptions"].select {
+            filter {
+                eq("area_id", areaId)
+                eq("user_id", userId ?: "")
+            }
+        }.decodeList<kotlinx.serialization.json.JsonObject>()
+            .firstOrNull()?.let { if (it.containsKey("subscribed")) it.bool("subscribed") else true } ?: true
+
+    suspend fun setSubscribed(areaId: String, subscribed: Boolean) {
+        db["area_subscriptions"].upsert(
+            jsonOf(
+                "area_id" to areaId,
+                "user_id" to (userId ?: ""),
+                "subscribed" to subscribed,
             ),
         )
     }

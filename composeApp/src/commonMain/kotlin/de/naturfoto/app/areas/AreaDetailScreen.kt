@@ -64,6 +64,7 @@ fun AreaDetailScreen(
     var postBody by remember { mutableStateOf("") }
     var threadTitle by remember { mutableStateOf("") }
     var threadFirstPost by remember { mutableStateOf("") }
+    var subscribed by remember { mutableStateOf(true) }
 
     fun loadPosts() {
         scope.launch {
@@ -75,6 +76,7 @@ fun AreaDetailScreen(
         try {
             forumId = repo.forumForArea(areaId)
             if (forumId != null) threads = repo.listThreads(forumId!!)
+            subscribed = repo.isSubscribed(areaId)
         } catch (e: Exception) { error = e.message }
         loadPosts()
     }
@@ -90,7 +92,28 @@ fun AreaDetailScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            TextButton(onClick = onBack) { Text("← $areaName") }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onBack) { Text("← $areaName") }
+                androidx.compose.material3.Switch(
+                    checked = subscribed,
+                    onCheckedChange = { on ->
+                        scope.launch {
+                            repo.setSubscribed(areaId, on)
+                            subscribed = on
+                        }
+                    },
+                )
+            }
+            Text(
+                if (subscribed) "Area abonniert — erscheint in der Timeline" else "Nicht abonniert — nicht in der Timeline",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
             TabRow(selectedTabIndex = tab) {
                 Tab(selected = tab == 0, onClick = { tab = 0; selectedThread = null }, text = { Text("Pinnwand") })
                 Tab(selected = tab == 1, onClick = { tab = 1; selectedThread = null }, text = { Text("Forum") })
