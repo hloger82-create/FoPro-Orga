@@ -72,7 +72,6 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
     var spots by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var areas by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var authors by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
-    var pending by remember { mutableStateOf<GeoPoint?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var admin by remember { mutableStateOf(false) }
     var editingRegion by remember { mutableStateOf(false) }
@@ -171,6 +170,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                                     }
                                     return true
                                 }
+                                // Wird unten nicht gebraucht, MapEventsReceiver verlangt beide Methoden
                                 override fun longPressHelper(p: GeoPoint?): Boolean = false
                             },
                         ),
@@ -299,7 +299,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
             }
         }
 
-        if (showSpotDialog) {
+        if (showSpotDialog && spotMode != SpotMode.MAP_PICK) {
             AlertDialog(
                 onDismissRequest = { showSpotDialog = false },
                 title = { Text("Location eintragen") },
@@ -309,8 +309,11 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                             Text("Koordinaten bestimmen:", style = MaterialTheme.typography.labelMedium)
                             TextButton(onClick = {
                                 locOverlay?.enableMyLocation()
-                                locOverlay?.myLocation?.let { spotCoord = it }
-                                    ?: run { error = "Kein GPS-Fix — im Emulator: Extended Controls → Location setzen" }
+                                locOverlay?.runOnFirstFix { loc -> spotCoord = loc }
+                                scope.launch {
+                                    kotlinx.coroutines.delay(3000)
+                                    if (spotCoord == null) error = "Kein GPS-Fix — im Emulator: rechts „…“ → Location → Koordinaten → Send"
+                                }
                             }) { Text("📍 Mein Standort") }
                             TextButton(onClick = { spotMode = SpotMode.MAP_PICK }) { Text("🗺 Auf Karte auswählen") }
                             TextButton(onClick = { photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) { Text("🖼 Geo-Daten aus Foto") }
