@@ -227,12 +227,14 @@ fun AreaDetailScreen(
 
 @Composable
 private fun PostList(posts: List<JsonObject>, repo: AreasRepository, onDelete: (String) -> Unit) {
+    var expandedPost by remember { mutableStateOf<String?>(null) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         items(posts, key = { it.str("id") }) { post ->
+            val id = post.str("id")
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -244,8 +246,13 @@ private fun PostList(posts: List<JsonObject>, repo: AreasRepository, onDelete: (
                         if (post.bool("pinned")) Text("📌", style = MaterialTheme.typography.bodyMedium)
                     }
                     post.str("body").let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                    CommentSection(repo = repo, postId = post.str("id"))
-                    TextButton(onClick = { onDelete(post.str("id")) }) { Text("Löschen") }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { expandedPost = if (expandedPost == id) null else id }) {
+                            Text(if (expandedPost == id) "Kommentare ausblenden" else "💬 Kommentieren")
+                        }
+                        TextButton(onClick = { onDelete(id) }) { Text("Löschen") }
+                    }
+                    if (expandedPost == id) CommentSection(repo = repo, postId = id)
                 }
             }
         }
