@@ -3,6 +3,7 @@ package de.naturfoto.app.map
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
+@Composable
 expect fun RegionEditor(
     currentPolygon: List<Pair<Double, Double>>,
     onPolygonChanged: (List<Pair<Double, Double>>) -> Unit,

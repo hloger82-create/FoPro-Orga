@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.weight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -32,7 +33,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.content
+import de.naturfoto.app.data.textOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import org.osmdroid.events.MapEventsReceiver
@@ -48,7 +49,7 @@ private val http = HttpClient(Android) {
 }
 
 private fun primitiveContent(el: kotlinx.serialization.json.JsonElement?): String? =
-    (el as? JsonPrimitive)?.content
+    el?.textOrNull
 
 private suspend fun searchRegion(query: String): List<Pair<Double, Double>>? {
     if (query.isBlank()) return null
