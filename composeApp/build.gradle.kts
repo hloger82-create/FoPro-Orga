@@ -43,6 +43,7 @@ kotlin {
             implementation(libs.ktor.client.android)
             implementation(libs.osmdroid)
             implementation(libs.androidx.preference)
+            implementation(libs.androidx.exifinterface)
         }
     }
 }
