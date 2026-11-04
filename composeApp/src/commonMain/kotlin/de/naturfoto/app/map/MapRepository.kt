@@ -57,9 +57,9 @@ class MapRepository {
         var inside = false
         var j = polygon.size - 1
         for (i in polygon.indices) {
-            val (xi, yi) = polygon[i]
-            val (xj, yj) = polygon[j]
-            if ((yi > lat) != (yj > lat) && lng < (xj - xi) * (lat - yi) / (yj - yi) + xi) inside = !inside
+            val (yI, xI) = polygon[i]   // Polygon speichert (lat, lng) = (y, x)
+            val (yJ, xJ) = polygon[j]
+            if ((yI > lat) != (yJ > lat) && lng < (xJ - xI) * (lat - yI) / (yJ - yI) + xI) inside = !inside
             j = i
         }
         return inside
