@@ -52,15 +52,20 @@ private fun primitiveContent(el: kotlinx.serialization.json.JsonElement?): Strin
 
 private suspend fun searchRegion(query: String): List<Pair<Double, Double>>? {
     if (query.isBlank()) return null
-    val res = http.get("https://nominatim.openstreetmap.org/search") {
+    val response = http.get("https://nominatim.openstreetmap.org/search") {
         parameter("q", query)
         parameter("format", "json")
         parameter("polygon_geojson", "1")
         parameter("limit", "1")
         header("User-Agent", "FoPro-Orga/0.1 (local-dev)")
-    }.body<JsonArray>()
+    }
+    val raw = response.body<String>()
+    if (!raw.trimStart().startsWith("[")) {
+        error("HTTP ${response.status.value}: ${raw.take(200)}")
+    }
+    val res = Json.parseToJsonElement(raw) as? JsonArray ?: error("Kein JSON-Array: ${raw.take(120)}")
     val first = res.firstOrNull() as? JsonObject ?: return null
-    val geom = first["geometry"]?.jsonObject ?: return null
+    val geom = (first["geojson"] ?: first["geometry"])?.jsonObject ?: return null
     val coords = geom["coordinates"]?.jsonArray ?: return null
     fun ring(arr: JsonArray): List<Pair<Double, Double>> = arr.mapNotNull { c ->
         val pair = c.jsonArray
@@ -114,7 +119,7 @@ actual fun RegionEditor(
                             status = "Kein Gebiet gefunden (${result?.size ?: 0} Punkte)"
                         }
                     } catch (e: Exception) {
-                        status = "Fehler: ${e.message?.take(120)}"
+                        status = "Fehler: ${e.message?.take(200)}"
                     }
                 }
             }) { Text("Suchen") }
