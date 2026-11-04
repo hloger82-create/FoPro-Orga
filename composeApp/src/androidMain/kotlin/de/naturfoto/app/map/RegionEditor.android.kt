@@ -89,6 +89,7 @@ actual fun RegionEditor(
     var drawing by remember { mutableStateOf<List<GeoPoint>>(emptyList()) }
     var drawn by remember { mutableStateOf(currentPolygon) }
     var query by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = modifier) {
         Column(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -102,9 +103,18 @@ actual fun RegionEditor(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = {
                 scope.launch {
-                    searchRegion(query)?.let {
-                        drawn = it
-                        onPolygonChanged(it)
+                    status = "Suche läuft…"
+                    try {
+                        val result = searchRegion(query)
+                        if (result != null && result.size >= 3) {
+                            drawn = result
+                            onPolygonChanged(result)
+                            status = "Gefunden: ${result.size} Punkte"
+                        } else {
+                            status = "Kein Gebiet gefunden (${result?.size ?: 0} Punkte)"
+                        }
+                    } catch (e: Exception) {
+                        status = "Fehler: ${e.message?.take(120)}"
                     }
                 }
             }) { Text("Suchen") }
@@ -120,6 +130,9 @@ actual fun RegionEditor(
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.padding(horizontal = 8.dp),
         )
+        status?.let {
+            Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary, modifier = Modifier.padding(horizontal = 8.dp))
+        }
         AndroidView(
             modifier = Modifier.fillMaxWidth().height(280.dp),
             factory = { context ->
