@@ -18,6 +18,7 @@ create table if not exists public.profiles (
     show_homepage_publicly boolean not null default false,
     show_socials_publicly boolean not null default false,
     ebird_enabled boolean not null default false,
+    ebird_api_key text,
     created_at timestamptz not null default now()
 );
 

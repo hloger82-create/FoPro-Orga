@@ -30,6 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import de.naturfoto.app.data.Supabase
+import de.naturfoto.app.ebird.shareCsvFile
 import de.naturfoto.app.data.bool
 import de.naturfoto.app.data.jsonOf
 import de.naturfoto.app.data.obj
@@ -61,6 +62,9 @@ fun ProfileScreen(projectId: String, modifier: Modifier = Modifier) {
     var showHomepagePublicly by remember { mutableStateOf(false) }
     var showSocialsPublicly by remember { mutableStateOf(false) }
     var ebirdEnabled by remember { mutableStateOf(false) }
+    var ebirdApiKey by remember { mutableStateOf("") }
+    var ebirdObs by remember { mutableStateOf<List<kotlinx.serialization.json.JsonObject>>(emptyList()) }
+    var ebirdLoading by remember { mutableStateOf(false) }
 
     LaunchedEffect(userId) {
         if (userId == null) {
@@ -83,6 +87,7 @@ fun ProfileScreen(projectId: String, modifier: Modifier = Modifier) {
             showHomepagePublicly = row.bool("show_homepage_publicly")
             showSocialsPublicly = row.bool("show_socials_publicly")
             ebirdEnabled = row.bool("ebird_enabled")
+            ebirdApiKey = row.str("ebird_api_key")
         } catch (e: Exception) {
             error = e.message ?: "Profil konnte nicht geladen werden"
         } finally {
@@ -135,6 +140,48 @@ fun ProfileScreen(projectId: String, modifier: Modifier = Modifier) {
             Switch(ebirdEnabled, { ebirdEnabled = it })
         }
         if (ebirdEnabled) {
+            OutlinedTextField(
+                ebirdApiKey,
+                { ebirdApiKey = it },
+                label = { Text("eBird API-Key (lokal gespeichert)") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            val ebirdRepo = remember { de.naturfoto.app.ebird.EBirdRepository() }
+            Button(
+                enabled = !ebirdLoading && ebirdApiKey.isNotBlank(),
+                onClick = {
+                    ebirdLoading = true
+                    scope.launch {
+                        try {
+                            val region = de.naturfoto.app.map.MapRepository().projectRegion(projectId)
+                            val center = de.naturfoto.app.ebird.EBirdRepository.regionCenter(region)
+                            ebirdObs = if (center != null) {
+                                ebirdRepo.recentObservations(
+                                    apiKey = ebirdApiKey.trim(),
+                                    centerLat = center.first,
+                                    centerLng = center.second,
+                                    radiusKm = de.naturfoto.app.ebird.EBirdRepository.regionRadiusKm(region),
+                                    backDays = 3,
+                                )
+                            } else emptyList()
+                        } catch (e: Exception) {
+                            error = "eBird: ${e.message?.take(120)}"
+                        } finally {
+                            ebirdLoading = false
+                        }
+                    }
+                },
+            ) { Text(if (ebirdLoading) "Lade…" else "eBird-Meldungen letzte 3 Tage im Projektgebiet") }
+            if (ebirdObs.isNotEmpty()) {
+                Text("${ebirdObs.size} Meldungen:", style = MaterialTheme.typography.labelMedium)
+                ebirdObs.take(20).forEach { o ->
+                    Text(
+                        "🐦 ${o.str("comName")} — ${o.str("obsDt")} ${o.str("obsTime") ?: ""} (${o.str("lat")}, ${o.str("lng")})",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
             var exporting by remember { mutableStateOf(false) }
             Button(
                 enabled = !exporting,
@@ -179,6 +226,7 @@ fun ProfileScreen(projectId: String, modifier: Modifier = Modifier) {
                             set("show_homepage_publicly", showHomepagePublicly)
                             set("show_socials_publicly", showSocialsPublicly)
                             set("ebird_enabled", ebirdEnabled)
+                            set("ebird_api_key", ebirdApiKey.trim().ifBlank { null })
                         }) { filter { eq("id", userId!!) } }
                         saved = true
                     } catch (e: Exception) {
