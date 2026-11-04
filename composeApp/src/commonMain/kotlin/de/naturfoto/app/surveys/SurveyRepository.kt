@@ -4,6 +4,7 @@ import de.naturfoto.app.data.Supabase
 import de.naturfoto.app.data.jsonOf
 import de.naturfoto.app.data.list
 import de.naturfoto.app.data.str
+import de.naturfoto.app.data.textOrNull
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -48,7 +49,7 @@ class SurveyRepository {
             }
         }.decodeList<JsonObject>().firstOrNull()
             ?.let { (it["option_indexes"] as? kotlinx.serialization.json.JsonArray) }
-            ?.mapNotNull { el -> (el as? kotlinx.serialization.json.JsonPrimitive)?.let { p -> p.contentOrNull?.toIntOrNull() } }
+            ?.mapNotNull { el -> el.textOrNull?.toIntOrNull() }
             ?.toSet() ?: emptySet()
 
     suspend fun voteCounts(surveyId: String): Map<Int, Int> =
@@ -56,7 +57,7 @@ class SurveyRepository {
             .decodeList<JsonObject>()
             .flatMap { v ->
                 ((v["option_indexes"] as? kotlinx.serialization.json.JsonArray) ?: return@flatMap emptyList())
-                    .mapNotNull { (it as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull?.toIntOrNull() }
+                    .mapNotNull { it.textOrNull?.toIntOrNull() }
             }
             .groupingBy { it }.eachCount()
 
