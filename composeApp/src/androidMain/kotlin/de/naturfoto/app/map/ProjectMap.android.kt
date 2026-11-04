@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddLocationAlt
+import androidx.compose.material.icons.filled.EditLocation
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.AlertDialog
@@ -32,16 +33,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import de.naturfoto.app.data.str
 import de.naturfoto.app.theme.ScrimTop
 import de.naturfoto.app.theme.translucentSurface
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
 import org.osmdroid.events.MapEventsReceiver
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polygon
 
@@ -51,7 +56,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
     val scope = rememberCoroutineScope()
 
     var region by remember { mutableStateOf<List<Pair<Double, Double>>>(emptyList()) }
-    var spots by remember { mutableStateOf<List<kotlinx.serialization.json.JsonObject>>(emptyList()) }
+    var spots by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var pending by remember { mutableStateOf<GeoPoint?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var admin by remember { mutableStateOf(false) }
@@ -91,7 +96,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                         )
                     }
                     overlays.add(
-                        org.osmdroid.views.overlay.MapEventsOverlay(
+                        MapEventsOverlay(
                             object : MapEventsReceiver {
                                 override fun singleTapConfirmedHelper(p: GeoPoint?): Boolean {
                                     if (p != null) pending = p
@@ -125,7 +130,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(ScrimTop, androidx.compose.ui.graphics.Color.Transparent)))
+                .background(Brush.verticalGradient(listOf(ScrimTop, Color.Transparent)))
                 .padding(top = 24.dp, start = 16.dp, end = 16.dp, bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -139,6 +144,40 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 Text("Projektgebiet · ${spots.size} Spots", style = MaterialTheme.typography.titleMedium)
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        }
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (admin) {
+                MapFab(
+                    icon = Icons.Default.EditLocation,
+                    label = "Gebiet bearbeiten",
+                    color = MaterialTheme.colorScheme.secondary,
+                    onClick = { editingRegion = true },
+                )
+            }
+            MapFab(
+                icon = Icons.Default.MyLocation,
+                label = "Mein Standort",
+                color = MaterialTheme.colorScheme.secondary,
+                onClick = { },
+            )
+            MapFab(
+                icon = Icons.Default.Layers,
+                label = "Ebenen",
+                color = MaterialTheme.colorScheme.secondary,
+                onClick = { },
+            )
+            MapFab(
+                icon = Icons.Default.AddLocationAlt,
+                label = "Spot melden",
+                color = MaterialTheme.colorScheme.primary,
+                onClick = { pending = GeoPoint(51.1657, 10.4515) },
+            )
         }
 
         if (editingRegion) {
@@ -161,44 +200,6 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                     )
                 },
             )
-        }
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            if (admin) {
-                FloatingActionButton(
-                    onClick = { editingRegion = true },
-                    containerColor = translucentSurface(),
-                    contentColor = MaterialTheme.colorScheme.secondary,
-                ) {
-                    Icon(Icons.Default.Layers, contentDescription = "Projektgebiet bearbeiten")
-                }
-            }
-            FloatingActionButton(
-                onClick = { },
-                containerColor = translucentSurface(),
-                contentColor = MaterialTheme.colorScheme.secondary,
-            ) {
-                Icon(Icons.Default.MyLocation, contentDescription = "Eigenen Standort")
-            }
-            FloatingActionButton(
-                onClick = { },
-                containerColor = translucentSurface(),
-                contentColor = MaterialTheme.colorScheme.secondary,
-            ) {
-                Icon(Icons.Default.Layers, contentDescription = "Ebenen")
-            }
-            FloatingActionButton(
-                onClick = { pending = GeoPoint(51.1657, 10.4515) },
-                containerColor = translucentSurface(),
-                contentColor = MaterialTheme.colorScheme.primary,
-            ) {
-                Icon(Icons.Default.AddLocationAlt, contentDescription = "Spot melden")
-            }
         }
 
         if (pending != null) {
@@ -255,5 +256,32 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 dismissButton = { TextButton(onClick = { pending = null }) { Text("Abbrechen") } },
             )
         }
+    }
+}
+
+@Composable
+private fun MapFab(
+    icon: ImageVector,
+    label: String,
+    color: Color,
+    onClick: () -> Unit,
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        FloatingActionButton(
+            onClick = onClick,
+            containerColor = translucentSurface(),
+            contentColor = color,
+        ) {
+            Icon(icon, contentDescription = label)
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(translucentSurface(0.6f))
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+        )
     }
 }
