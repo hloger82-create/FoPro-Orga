@@ -73,15 +73,19 @@ private suspend fun searchRegion(query: String): List<Pair<Double, Double>>? {
         val lat = primitiveContent(pair.getOrNull(1))?.toDoubleOrNull()
         if (lat != null && lng != null) lat to lng else null
     }
-    return when (primitiveContent(geom["type"])) {
-        "Polygon" -> ring(coords.firstOrNull()?.jsonArray ?: return null)
-        "MultiPolygon" -> coords.flatMap { ring(it.jsonArray.firstOrNull()?.jsonArray ?: return@flatMap emptyList()) }
+    val rings: List<List<Pair<Double, Double>>> = when (primitiveContent(geom["type"])) {
+        "Polygon" -> listOf(ring(coords.firstOrNull()?.jsonArray ?: return null))
+        "MultiPolygon" -> coords.mapNotNull { ring(it.jsonArray.firstOrNull()?.jsonArray ?: return@mapNotNull null) }
         else -> {
             val lat = primitiveContent(first["lat"])?.toDoubleOrNull()
             val lon = primitiveContent(first["lon"])?.toDoubleOrNull()
-            if (lat != null && lon != null) listOf(lat to lon) else null
+            return if (lat != null && lon != null) listOf(listOf(lat to lon)) else null
         }
     }
+    // Nur den größten Ring (nach Punktzahl) verwenden und ausdünnen, damit das Polygon nicht self-intersectt
+    val largest = rings.maxByOrNull { it.size } ?: return null
+    val step = (largest.size / 500).coerceAtLeast(1)
+    return largest.filterIndexed { i, _ -> i % step == 0 }
 }
 
 @Composable
