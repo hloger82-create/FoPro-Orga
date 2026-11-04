@@ -66,6 +66,8 @@ import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polygon
 
+private enum class SpotMode { MAP_PICK }
+
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 actual fun ProjectMap(
@@ -516,7 +518,13 @@ actual fun ProjectMap(
     }
 }
 
-private enum class SpotMode { MAP_PICK }
+@Composable
+private fun FilterRow(label: String, checked: Boolean, onChecked: (Boolean) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(label)
+        Checkbox(checked, onChecked)
+    }
+}
 
 @Composable
 private fun MapFab(
