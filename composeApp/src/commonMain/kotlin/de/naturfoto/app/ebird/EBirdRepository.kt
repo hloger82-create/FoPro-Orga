@@ -36,15 +36,17 @@ class EBirdRepository {
         }) { filter { eq("id", uid) } }
     }
 
-    /** Letzte Meldungen (back Tage) im Umkreis um das Projektgebiets-Zentrum */
+    /** Letzte Meldungen (back Tage) im Umkreis um das Projektgebiets-Zentrum, deutsch */
     suspend fun recentObservations(
         apiKey: String,
         centerLat: Double,
         centerLng: Double,
         radiusKm: Double,
         backDays: Int = 3,
+        notable: Boolean = false,
     ): List<JsonObject> {
-        val res = http.get("https://api.ebird.org/v2/data/obs/geo/recent") {
+        val path = if (notable) "recent/notable" else "recent"
+        val res = http.get("https://api.ebird.org/v2/data/obs/geo/$path") {
             header("X-eBirdAPIToken", apiKey)
             parameter("lat", centerLat)
             parameter("lng", centerLng)
@@ -52,6 +54,7 @@ class EBirdRepository {
             parameter("back", backDays)
             parameter("maxResults", 100)
             parameter("detailLevel", "simple")
+            parameter("locale", "de")
         }.body<JsonArray>()
         return res.mapNotNull { it as? JsonObject }
     }

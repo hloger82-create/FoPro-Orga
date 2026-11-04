@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Poll
 import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.Icon
@@ -33,6 +34,7 @@ import de.naturfoto.app.calendar.CalendarScreen
 import de.naturfoto.app.chat.ChatScreen
 import de.naturfoto.app.auth.AuthScreen
 import de.naturfoto.app.map.ProjectMap
+import de.naturfoto.app.ebird.EBirdScreen
 import de.naturfoto.app.profile.ProfileScreen
 import de.naturfoto.app.surveys.SurveysScreen
 import de.naturfoto.app.timeline.TimelineScreen
@@ -46,6 +48,7 @@ private enum class Tab(val label: String, val icon: androidx.compose.ui.graphics
     MAP("Karte", Icons.Default.Map),
     PROFILE("Profil", Icons.Default.Person),
     SURVEYS("Umfragen", Icons.Default.Poll),
+    EBIRD("eBird", Icons.Default.Pets),
 }
 
 @Composable
@@ -58,6 +61,7 @@ fun NaturfotoApp() {
         }
         var tab by remember { mutableStateOf(Tab.TIMELINE) }
         var projectId by remember { mutableStateOf<String?>(null) }
+        var mapFocus by remember { mutableStateOf<Pair<Double, Double>?>(null) }
         var selectedArea by remember { mutableStateOf<Pair<String, String>?>(null) }
         LaunchedEffect(Unit) {
             if (projectId == null) projectId = AreasRepository().firstProjectIdForUser()
@@ -110,7 +114,14 @@ fun NaturfotoApp() {
                     }
                     Tab.MAP -> {
                         val pid = projectId
-                        if (pid != null) ProjectMap(projectId = pid, modifier = Modifier) else PlaceholderScreen("Projekt wird geladen…")
+                        if (pid != null) ProjectMap(projectId = pid, focus = mapFocus, onFocusConsumed = { mapFocus = null }, modifier = Modifier) else PlaceholderScreen("Projekt wird geladen…")
+                    }
+                    Tab.EBIRD -> {
+                        val pid = projectId
+                        if (pid != null) EBirdScreen(projectId = pid, onOpenOnMap = { lat, lng ->
+                            mapFocus = lat to lng
+                            tab = Tab.MAP
+                        }) else PlaceholderScreen("Projekt wird geladen…")
                     }
                     Tab.PROFILE -> {
                         val pid = projectId

@@ -14,11 +14,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddLocationAlt
 import androidx.compose.material.icons.filled.EditLocation
 import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -63,7 +68,12 @@ import org.osmdroid.views.overlay.Polygon
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-actual fun ProjectMap(projectId: String, modifier: Modifier) {
+actual fun ProjectMap(
+    projectId: String,
+    focus: Pair<Double, Double>?,
+    onFocusConsumed: () -> Unit,
+    modifier: Modifier,
+) {
     val repo = remember { MapRepository() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -98,6 +108,32 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
 
     // Spot-Detail
     var selectedSpot by remember { mutableStateOf<JsonObject?>(null) }
+
+    // Drawer-Filter
+    val drawerState = rememberDrawerState(androidx.compose.material3.DrawerValue.Closed)
+    var showAll by remember { mutableStateOf(true) }
+    var hiddenAreas by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var showPrivate by remember { mutableStateOf(true) }
+    var showEBird by remember { mutableStateOf(false) }
+    var ebirdObs by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+
+    LaunchedEffect(focus) {
+        val f = focus ?: return@LaunchedEffect
+        mapViewRef?.controller?.animateTo(GeoPoint(f.first, f.second), 15.0, 800L)
+        onFocusConsumed()
+    }
+
+    fun loadEBird() {
+        scope.launch {
+            try {
+                val key = de.naturfoto.app.ebird.EBirdRepository().apiKey() ?: return@launch
+                val center = de.naturfoto.app.ebird.EBirdRepository.regionCenter(region) ?: return@launch
+                ebirdObs = de.naturfoto.app.ebird.EBirdRepository().recentObservations(
+                    key, center.first, center.second, de.naturfoto.app.ebird.EBirdRepository.regionRadiusKm(region), backDays = 3,
+                )
+            } catch (_: Exception) { }
+        }
+    }
 
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -153,7 +189,27 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
         loadSpots()
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    androidx.compose.material3.ModalNavigationDrawer(
+        drawerState = drawerState,
+        modifier = modifier.fillMaxSize(),
+        drawerContent = {
+            androidx.compose.material3.ModalDrawerSheet(modifier = Modifier.width(280.dp)) {
+                Column(modifier = Modifier.padding(16.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Spots anzeigen", style = MaterialTheme.typography.titleMedium)
+                    FilterRow("Alle", showAll) { showAll = it }
+                    areas.forEach { a ->
+                        FilterRow(a.str("name"), showAll || a.str("id") !in hiddenAreas) { on ->
+                            hiddenAreas = if (on) hiddenAreas - a.str("id") else hiddenAreas + a.str("id")
+                            showAll = false
+                        }
+                    }
+                    FilterRow("Privat (eigene)", showPrivate) { showPrivate = it }
+                    FilterRow("eBird-Meldungen", showEBird) { showEBird = it; if (it) loadEBird() }
+                }
+            }
+        },
+    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { ctx ->
@@ -212,6 +268,9 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                             || spotArea == null
                             || spotArea in subscribedAreas
                     if (!visible) return@forEach
+                    if (!showAll && spotArea != null && spotArea in hiddenAreas) return@forEach
+                    if (!showPrivate && s.str("visibility") == "private") return@forEach
+                    if (showAll && spotArea != null) return@forEach
                     val color = repo.areaColor(spotArea)
                     mapView.overlays.add(
                         Marker(mapView).apply {
@@ -228,6 +287,27 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                             }
                         },
                     )
+                }
+                if (showEBird) {
+                    ebirdObs.forEach { o ->
+                        o.str("lat").toDoubleOrNull()?.let { lat ->
+                            o.str("lng").toDoubleOrNull()?.let { lng ->
+                                mapView.overlays.add(
+                                    Marker(mapView).apply {
+                                        position = GeoPoint(lat, lng)
+                                        title = "🐦 ${o.str("comName")}"
+                                        icon?.mutate()?.setTint(0xFF3B82F6.toInt())
+                                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                        setOnMarkerClickListener { _, _ ->
+                                            selectedSpot = null
+                                            error = "eBird: ${o.str("comName")} — ${o.str("obsDt")} ${o.str("locName")}"
+                                            true
+                                        }
+                                    },
+                                )
+                            }
+                        }
+                    }
                 }
                 mapView.invalidate()
             },
@@ -253,6 +333,12 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 )
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            androidx.compose.material3.IconButton(
+                onClick = { scope.launch { drawerState.open() } },
+                modifier = Modifier.align(Alignment.TopStart),
+            ) {
+                Icon(Icons.Default.Menu, contentDescription = "Filter öffnen", tint = MaterialTheme.colorScheme.onSurface)
+            }
         }
 
         Row(
