@@ -181,25 +181,33 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
         }
 
         if (editingRegion) {
-            AlertDialog(
-                onDismissRequest = { editingRegion = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        scope.launch {
-                            repo.saveRegion(projectId, region)
-                            editingRegion = false
+            androidx.compose.ui.window.Dialog(onDismissRequest = { editingRegion = false }) {
+                androidx.compose.material3.Card(
+                    modifier = Modifier.fillMaxWidth().height(520.dp),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+                        Text("Projektgebiet festlegen", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(8.dp))
+                        RegionEditor(
+                            currentPolygon = region,
+                            onPolygonChanged = { region = it },
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                        )
+                        androidx.compose.foundation.layout.Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                        ) {
+                            TextButton(onClick = { editingRegion = false }) { Text("Abbrechen") }
+                            TextButton(onClick = {
+                                scope.launch {
+                                    repo.saveRegion(projectId, region)
+                                    editingRegion = false
+                                }
+                            }) { Text("Speichern") }
                         }
-                    }) { Text("Speichern") }
-                },
-                dismissButton = { TextButton(onClick = { editingRegion = false }) { Text("Abbrechen") } },
-                text = {
-                    RegionEditor(
-                        currentPolygon = region,
-                        onPolygonChanged = { region = it },
-                        modifier = Modifier.fillMaxWidth().height(440.dp),
-                    )
-                },
-            )
+                    }
+                }
+            }
         }
 
         if (pending != null) {
