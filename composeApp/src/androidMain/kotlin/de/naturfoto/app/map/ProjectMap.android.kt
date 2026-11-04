@@ -61,6 +61,8 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
     var error by remember { mutableStateOf<String?>(null) }
     var admin by remember { mutableStateOf(false) }
     var editingRegion by remember { mutableStateOf(false) }
+    var layerHiking by remember { mutableStateOf(false) }
+    var mapViewRef by remember { mutableStateOf<MapView?>(null) }
 
     var title by remember { mutableStateOf("") }
     var desc by remember { mutableStateOf("") }
@@ -85,6 +87,11 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                     setMultiTouchControls(true)
                     controller.setZoom(6.0)
                     controller.setCenter(GeoPoint(51.1657, 10.4515))
+                    myLocationOverlay = org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider(this).let {
+                        org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay(it, this).apply {
+                            disableMyLocation()
+                        }
+                    }.also { overlays.add(it) }
                     if (region.size >= 3) {
                         overlays.add(
                             Polygon().apply {
@@ -110,6 +117,7 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 }
             },
             update = { mapView ->
+                mapViewRef = mapView
                 mapView.overlays.removeAll { it is Marker || it is Polygon }
                 if (region.size >= 3) {
                     mapView.overlays.add(
@@ -177,13 +185,25 @@ actual fun ProjectMap(projectId: String, modifier: Modifier) {
                 icon = Icons.Default.MyLocation,
                 label = "Mein Standort",
                 color = MaterialTheme.colorScheme.secondary,
-                onClick = { },
+                onClick = {
+                    mapViewRef?.let { mv ->
+                        val loc = mv.myLocationOverlay
+                        loc.enableMyLocation()
+                        loc.enableFollowLocation()
+                        loc.myLocation?.let { mv.controller.animateTo(it) }
+                    }
+                },
             )
             MapFab(
                 icon = Icons.Default.Layers,
-                label = "Ebenen",
+                label = if (layerHiking) "Ebenen: Topo an" else "Ebenen: Topo aus",
                 color = MaterialTheme.colorScheme.secondary,
-                onClick = { },
+                onClick = {
+                    layerHiking = !layerHiking
+                    mapViewRef?.setTileSource(
+                        if (layerHiking) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK,
+                    )
+                },
             )
             MapFab(
                 icon = Icons.Default.AddLocationAlt,
