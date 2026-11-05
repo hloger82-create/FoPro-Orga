@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +56,7 @@ private enum class Tab(val label: String, val icon: androidx.compose.ui.graphics
 @Composable
 fun NaturfotoApp() {
     NaturfotoTheme {
+        val scope = rememberCoroutineScope()
         var signedIn by remember { mutableStateOf(AuthRepository().currentUserId() != null) }
         if (!signedIn) {
             AuthScreen(onSignedIn = { signedIn = true })
