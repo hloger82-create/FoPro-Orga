@@ -376,6 +376,20 @@ create policy "projects create" on public.projects for insert with check (auth.u
 create policy "projects admin update" on public.projects for update using (public.is_project_admin(id));
 create policy "projects admin delete" on public.projects for delete using (public.is_project_admin(id));
 
+-- Projekt automatisch löschen, wenn das letzte Mitglied austritt
+create or replace function public.handle_last_member_left()
+returns trigger language plpgsql security definer as $$
+begin
+    if not exists (select 1 from public.project_members where project_id = old.project_id) then
+        delete from public.projects where id = old.project_id;
+    end if;
+    return old;
+end; $$;
+drop trigger if exists on_member_left_cleanup on public.project_members;
+create trigger on_member_left_cleanup after delete on public.project_members
+    for each row execute function public.handle_last_member_left();
+create policy "projects admin delete" on public.projects for delete using (public.is_project_admin(id));
+
 create policy "members read" on public.project_members for select using (public.is_project_member(project_id));
 create policy "members admin manage" on public.project_members for all using (public.is_project_admin(project_id));
 

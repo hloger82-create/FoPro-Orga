@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -39,15 +42,17 @@ fun ProjectOverviewScreen(
 
     var members by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var isAdmin by remember { mutableStateOf(false) }
+    var myIdLocal by remember { mutableStateOf<String?>(null) }
     var inviteCode by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     fun load() {
         scope.launch {
             try {
                 members = repo.members(projectId)
-                val myId = de.naturfoto.app.data.Supabase.client.auth.currentUserOrNull()?.id
-                isAdmin = members.any { it.str("user_id") == myId && it.str("role") == "admin" }
+                myIdLocal = de.naturfoto.app.data.Supabase.client.auth.currentUserOrNull()?.id
+                isAdmin = members.any { it.str("user_id") == myIdLocal && it.str("role") == "admin" }
             } catch (e: Exception) { error = e.message }
         }
     }
@@ -77,13 +82,51 @@ fun ProjectOverviewScreen(
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
             items(members, key = { it.str("user_id") }) { m ->
                 Card(modifier = Modifier.fillMaxWidth()) {
-                    Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         Text(m.str("display_name"))
-                        Text(m.str("role"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Text(m.str("role"), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
+                            if (isAdmin && m.str("role") != "admin" && m.str("user_id") != myIdLocal) {
+                                TextButton(onClick = {
+                                    scope.launch {
+                                        try { repo.setMemberRole(projectId, m.str("user_id"), "admin"); load() } catch (e: Exception) { error = e.message }
+                                    }
+                                }) { Text("Zum Admin") }
+                            }
+                        }
                     }
                 }
             }
         }
         OutlinedButton(onClick = onLeaveProject) { Text("Projekt verlassen") }
+        if (isAdmin) {
+            androidx.compose.material3.Button(
+                onClick = { showDeleteConfirm = true },
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+            ) { Text("Projekt löschen") }
+        }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Projekt wirklich löschen?") },
+            text = { Text("Alle Areas, Chats, Spots, Termine und Umfragen dieses Projekts werden unwiderruflich gelöscht.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            try {
+                                repo.deleteProject(projectId)
+                                showDeleteConfirm = false
+                                onLeaveProject()
+                            } catch (e: Exception) { error = e.message }
+                        }
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) { Text("Ja, löschen") }
+            },
+            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Abbrechen") } },
+        )
     }
 }

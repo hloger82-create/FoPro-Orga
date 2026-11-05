@@ -60,6 +60,19 @@ class ProjectsRepository {
         }
     }
 
+    suspend fun deleteProject(projectId: String) {
+        db["projects"].delete { filter { eq("id", projectId) } }
+    }
+
+    suspend fun setMemberRole(projectId: String, memberUserId: String, role: String) {
+        db["project_members"].update({ set("role", role) }) {
+            filter {
+                eq("project_id", projectId)
+                eq("user_id", memberUserId)
+            }
+        }
+    }
+
     suspend fun members(projectId: String): List<JsonObject> =
         db["project_members"].select {
             filter { eq("project_id", projectId) }
