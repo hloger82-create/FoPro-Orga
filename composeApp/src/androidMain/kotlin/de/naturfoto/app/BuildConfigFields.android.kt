@@ -1,4 +1,4 @@
-package de.naturfoto.app
+package de.naturfoto.app.data
 
 actual object BuildConfigFields {
     actual val SUPABASE_URL: String = BuildConfig.SUPABASE_URL
