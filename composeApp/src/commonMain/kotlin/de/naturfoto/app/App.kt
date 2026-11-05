@@ -1,6 +1,10 @@
 package de.naturfoto.app
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -165,7 +169,7 @@ fun NaturfotoApp() {
                     tab == Tab.CHAT && pid != null -> ChatScreen(projectId = pid)
                     tab == Tab.MAP && pid != null -> ProjectMap(projectId = pid, focus = mapFocus, onFocusConsumed = { mapFocus = null }, modifier = Modifier)
                     tab == Tab.MORE -> {
-                        Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                        Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("Mehr", style = MaterialTheme.typography.headlineSmall)
                             MoreEntry.entries.forEach { e ->
                                 androidx.compose.material3.OutlinedButton(
