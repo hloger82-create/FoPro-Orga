@@ -164,6 +164,17 @@ fun NaturfotoApp() {
                     }
                     tab == Tab.CHAT && pid != null -> ChatScreen(projectId = pid)
                     tab == Tab.MAP && pid != null -> ProjectMap(projectId = pid, focus = mapFocus, onFocusConsumed = { mapFocus = null }, modifier = Modifier)
+                    tab == Tab.MORE -> {
+                        Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                            Text("Mehr", style = MaterialTheme.typography.headlineSmall)
+                            MoreEntry.entries.forEach { e ->
+                                androidx.compose.material3.OutlinedButton(
+                                    onClick = { moreEntry = e },
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) { Text(e.label) }
+                            }
+                        }
+                    }
                     else -> PlaceholderScreen("Projekt wird geladen…")
                 }
             }

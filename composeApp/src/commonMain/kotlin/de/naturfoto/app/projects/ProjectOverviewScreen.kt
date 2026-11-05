@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import de.naturfoto.app.data.str
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
 
@@ -45,9 +46,7 @@ fun ProjectOverviewScreen(
         scope.launch {
             try {
                 members = repo.members(projectId)
-                val myId = de.naturfoto.app.data.Supabase.client.let { c ->
-                    io.github.jan.supabase.auth.auth.let { a -> c.auth.currentUserOrNull()?.id }
-                }
+                val myId = de.naturfoto.app.data.Supabase.client.auth.currentUserOrNull()?.id
                 isAdmin = members.any { it.str("user_id") == myId && it.str("role") == "admin" }
             } catch (e: Exception) { error = e.message }
         }
