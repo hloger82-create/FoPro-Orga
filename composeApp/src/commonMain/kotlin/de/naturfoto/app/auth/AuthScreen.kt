@@ -48,6 +48,7 @@ fun AuthScreen(
     var displayName by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
+    var confirmHint by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -103,6 +104,12 @@ fun AuthScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            if (confirmHint) {
+                Text(
+                    "Registrierung fast fertig: Wir haben dir eine Bestätigungs-Mail an ${email.trim()} geschickt. Bitte bestätige deine E-Mail-Adresse und melde dich dann an.",
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
             error?.let {
                 Text(it, color = MaterialTheme.colorScheme.error)
             }
@@ -116,10 +123,11 @@ fun AuthScreen(
                         try {
                             if (mode == AuthMode.LOGIN) {
                                 repo.signIn(email.trim(), password)
+                                onSignedIn()
                             } else {
                                 repo.signUp(email.trim(), password, username.trim(), displayName.trim())
+                                confirmHint = true
                             }
-                            onSignedIn()
                         } catch (e: Exception) {
                             error = e.message ?: "Unbekannter Fehler"
                         } finally {

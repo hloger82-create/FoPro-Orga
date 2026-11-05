@@ -83,6 +83,21 @@ fun NaturfotoApp() {
         var showOverview by remember { mutableStateOf(false) }
         var menuOpen by remember { mutableStateOf(false) }
 
+        if (!AuthRepository().emailConfirmed()) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(24.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text("Bitte bestätige deine E-Mail-Adresse", style = MaterialTheme.typography.headlineSmall)
+                Text("Wir haben dir eine Bestätigungs-Mail geschickt. Danach hier neu anmelden.", style = MaterialTheme.typography.bodyMedium)
+                androidx.compose.material3.OutlinedButton(onClick = {
+                    scope.launch { AuthRepository().signOut() }
+                    signedIn = false
+                }) { Text("Zurück zum Login") }
+            }
+            return@NaturfotoTheme
+        }
         if (projectId == null) {
             ProjectPickerScreen(
                 onSelectProject = { id, name ->

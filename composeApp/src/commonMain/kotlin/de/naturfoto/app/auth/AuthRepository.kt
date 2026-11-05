@@ -30,4 +30,5 @@ class AuthRepository {
     suspend fun signOut() = auth.signOut()
 
     fun currentUserId(): String? = auth.currentUserOrNull()?.id
+    fun emailConfirmed(): Boolean = auth.currentUserOrNull()?.emailConfirmedAt != null
 }
