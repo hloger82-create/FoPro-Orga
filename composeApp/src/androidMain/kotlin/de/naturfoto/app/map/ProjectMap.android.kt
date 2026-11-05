@@ -354,6 +354,7 @@ actual fun ProjectMap(
                 MapFab(Icons.Default.EditLocation, "Gebiet bearbeiten", MaterialTheme.colorScheme.secondary) { editingRegion = true }
             }
             MapFab(Icons.Default.MyLocation, "Mein Standort", MaterialTheme.colorScheme.secondary) {
+                permissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION)
                 mapViewRef?.let { mv ->
                     locOverlay?.enableMyLocation()
                     locOverlay?.enableFollowLocation()
