@@ -86,6 +86,7 @@ actual fun ProjectMap(
     var subscribedAreas by remember { mutableStateOf<Set<String>>(emptySet()) }
     var authors by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var error by remember { mutableStateOf<String?>(null) }
+    var photoGpsStatus by remember { mutableStateOf<String?>(null) }
     var admin by remember { mutableStateOf(false) }
     var editingRegion by remember { mutableStateOf(false) }
     var layerHiking by remember { mutableStateOf(false) }
@@ -154,6 +155,11 @@ actual fun ProjectMap(
                     }
                     // GPS aus EXIF in Dezimalgrad umrechnen
                     val latRef = ex["gps_latitude"]
+                    if (latRef == null) {
+                        photoGpsStatus = "⚠ Keine GPS-Daten im Foto — bitte Standort manuell wählen (Mein Standort / Auf Karte)."
+                    } else {
+                        photoGpsStatus = "✓ GPS aus Foto übernommen."
+                    }
                     if (latRef != null) {
                         val parts = latRef.split(",").map { it.trim() }
                         val lat = parts[0].toDouble() + parts[1].toDouble() / 60.0 + parts[2].toDouble() / 3600.0
@@ -367,6 +373,7 @@ actual fun ProjectMap(
             }
             MapFab(Icons.Default.AddLocationAlt, "Location eintragen", MaterialTheme.colorScheme.primary) {
                 showSpotDialog = true
+                photoGpsStatus = null
                 spotMode = null
                 spotCoord = null
                 title = ""
@@ -433,6 +440,10 @@ actual fun ProjectMap(
                             }) { Text("📍 Mein Standort") }
                             TextButton(onClick = { spotMode = SpotMode.MAP_PICK }) { Text("🗺 Auf Karte auswählen") }
                             TextButton(onClick = { photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) { Text("🖼 Geo-Daten aus Foto") }
+                        }
+                        photoGpsStatus?.let {
+                            Text(it, style = MaterialTheme.typography.labelMedium,
+                                color = if (it.startsWith("⚠")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary)
                         }
                         spotCoord?.let {
                             val insideNow = repo.isInsidePolygon(it.latitude, it.longitude, region)
