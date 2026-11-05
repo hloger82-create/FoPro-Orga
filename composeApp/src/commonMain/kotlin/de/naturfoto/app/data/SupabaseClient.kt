@@ -22,7 +22,7 @@ object Supabase {
     }
 }
 
-object BuildConfigFields {
-    const val SUPABASE_URL = "https://<projekt-ref>.supabase.co"
-    const val SUPABASE_ANON_KEY = "<anon-key>"
+expect object BuildConfigFields {
+    val SUPABASE_URL: String
+    val SUPABASE_ANON_KEY: String
 }

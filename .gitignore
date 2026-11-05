@@ -1,0 +1,7 @@
+local.properties
+.gradle/
+build/
+composeApp/build/
+.idea/
+*.iml
+gradle/wrapper/gradle-wrapper.jar
