@@ -126,8 +126,9 @@ class MapRepository {
     ): String {
         var photoUrl: String? = null
         if (photoBytes != null) {
+            val compressed = compressPhoto(photoBytes)
             val path = "spots/${userId}/${System.currentTimeMillis()}.jpg"
-            Supabase.client.storage.from("photos").upload(path, photoBytes)
+            Supabase.client.storage.from("photos").upload(path, compressed)
             photoUrl = Supabase.client.storage.from("photos").publicUrl(path)
         }
         val exifJson = exif?.let { jsonOf(*it.map { (k, v) -> k to v }.toTypedArray()) }
