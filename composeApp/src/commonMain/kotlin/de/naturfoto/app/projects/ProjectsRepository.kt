@@ -16,7 +16,7 @@ class ProjectsRepository {
     suspend fun myProjects(): List<JsonObject> =
         db["project_members"].select {
             filter { eq("user_id", userId ?: "") }
-            order("joined_at", Order.ASCENDING)
+            order("role", Order.ASCENDING)
         }.decodeList<JsonObject>()
             .mapNotNull { m ->
                 db["projects"].select { filter { eq("id", m.str("project_id")) } }
