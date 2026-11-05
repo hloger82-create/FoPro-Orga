@@ -27,6 +27,8 @@ class AuthRepository {
         }
     }
 
+    suspend fun resetPassword(email: String) = auth.resetPasswordForEmail(email)
+
     suspend fun signOut() = auth.signOut()
 
     fun currentUserId(): String? = auth.currentUserOrNull()?.id

@@ -59,6 +59,9 @@ fun ProjectPickerScreen(
             TextButton(onClick = onLogout) { Text("Abmelden") }
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        if (projects.isEmpty()) {
+            Text("Du bist noch in keinem Projekt. Erstelle eines oder tritt mit Einladungscode bei.", style = MaterialTheme.typography.bodyMedium)
+        }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
             items(projects, key = { it.str("id") }) { p ->
                 Card(modifier = Modifier.fillMaxWidth(), onClick = { onSelectProject(p.str("id"), p.str("name")) }) {

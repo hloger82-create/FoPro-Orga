@@ -49,6 +49,7 @@ fun AuthScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
     var confirmHint by remember { mutableStateOf(false) }
+    var resetSent by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -110,6 +111,28 @@ fun AuthScreen(
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
+            if (resetSent) {
+                Text("Passwort-Reset-Mail an ${email.trim()} unterwegs. Bitte Postfach prüfen.", color = MaterialTheme.colorScheme.primary)
+            }
+            if (mode == AuthMode.LOGIN) {
+                androidx.compose.material3.TextButton(
+                    enabled = !loading && email.isNotBlank(),
+                    onClick = {
+                        scope.launch {
+                            loading = true
+                            error = null
+                            try {
+                                repo.resetPassword(email.trim())
+                                resetSent = true
+                            } catch (e: Exception) {
+                                error = e.message ?: "Fehler beim Reset"
+                            } finally {
+                                loading = false
+                            }
+                        }
+                    },
+                ) { Text("Passwort vergessen?") }
+            }
             error?.let {
                 Text(it, color = MaterialTheme.colorScheme.error)
             }
@@ -129,7 +152,12 @@ fun AuthScreen(
                                 confirmHint = true
                             }
                         } catch (e: Exception) {
-                            error = e.message ?: "Unbekannter Fehler"
+                            val m = e.message ?: ""
+                            error = when {
+                                m.contains("already registered", ignoreCase = true) || m.contains("already exists", ignoreCase = true) ->
+                                    "Für diese E-Mail existiert bereits ein Konto. Bitte anmelden oder Passwort zurücksetzen."
+                                else -> m.ifBlank { "Unbekannter Fehler" }
+                            }
                         } finally {
                             loading = false
                         }
