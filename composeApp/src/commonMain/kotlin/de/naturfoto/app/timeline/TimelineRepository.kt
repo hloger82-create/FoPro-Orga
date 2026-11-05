@@ -54,7 +54,10 @@ class TimelineRepository {
         val messages = db["messages"].select {
             order("created_at", Order.DESCENDING)
         }.decodeList<JsonObject>()
-            .filter { channelArea[it.str("channel_id")] in areaIds && it.str("channel_id") !in muted }
+            .filter {
+                val chArea = channelArea[it.str("channel_id")]
+                (chArea == null || chArea in areaIds) && it.str("channel_id") !in muted
+            }
 
         val events = db["events"].select {
             filter { eq("project_id", projectId) }
