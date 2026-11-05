@@ -56,7 +56,23 @@ class EBirdRepository {
             parameter("detailLevel", "simple")
             parameter("locale", "de")
         }.body<JsonArray>()
-        return res.mapNotNull { it as? JsonObject }
+        val obs = res.mapNotNull { it as? JsonObject }
+        return obs.map { localize(it, apiKey) }
+    }
+
+    /** Deutscher Name über die locale-Taxonomie nachschlagen (comName vom Geo-Endpoint ist teils englisch) */
+    private suspend fun localize(o: JsonObject, apiKey: String): JsonObject {
+        return try {
+            val tax = http.get("https://api.ebird.org/v2/ref/taxonomy/locale/de") {
+                header("X-eBirdAPIToken", apiKey)
+                parameter("cat", "species")
+                parameter("sciName", o.str("sciName"))
+            }.body<JsonArray>()
+            val de = (tax.firstOrNull() as? JsonObject)?.str("comName")
+            if (!de.isNullOrBlank()) {
+                val m = o.toMutableMap(); m["comName"] = kotlinx.serialization.json.JsonPrimitive(de); JsonObject(m)
+            } else o
+        } catch (_: Exception) { o }
     }
 
     companion object {
