@@ -505,6 +505,14 @@ actual fun ProjectMap(
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Von: ${authors[s.str("author_id")] ?: "…"}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
                         s.str("description").ifBlank { null }?.let { Text(it) }
+                        s.str("photo_url").ifBlank { null }?.let { url ->
+                            coil3.compose.AsyncImage(
+                                model = url,
+                                contentDescription = "Spot-Foto",
+                                modifier = Modifier.fillMaxWidth().height(180.dp).clip(RoundedCornerShape(12.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            )
+                        }
                         Text("📍 ${s.str("lat")}, ${s.str("lng")}", style = MaterialTheme.typography.labelSmall)
                         val areaName = areas.firstOrNull { it.str("id") == s.str("area_id") }?.str("name")
                         if (areaName != null) Text("Area: $areaName", style = MaterialTheme.typography.labelSmall)

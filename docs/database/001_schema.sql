@@ -261,6 +261,14 @@ create table if not exists public.survey_votes (
     primary key (survey_id, user_id)
 );
 
+-- ---------- Storage: Fotos (komprimiert, max 1920px) ----------
+insert into storage.buckets (id, name, public) values ('photos', 'photos', true)
+    on conflict (id) do nothing;
+create policy "photos upload" on storage.objects for insert to authenticated
+    with check (bucket_id = 'photos');
+create policy "photos read" on storage.objects for select to authenticated
+    using (bucket_id = 'photos');
+
 -- ---------- Realtime ----------
 do $$
 declare t text;
@@ -347,6 +355,22 @@ create policy "profiles self upsert" on public.profiles for insert with check (a
 create policy "profiles self update" on public.profiles for update using (auth.uid() = id);
 
 -- Projekte: Mitglieder lesen, Admins verwalten
+-- ---------- Projekt-Einladungen ----------
+create table if not exists public.project_invites (
+    id uuid primary key default uuid_generate_v4(),
+    project_id uuid not null references public.projects(id) on delete cascade,
+    code text not null unique,
+    role text not null default 'member' check (role in ('member','moderator','admin')),
+    created_by uuid not null references public.profiles(id),
+    expires_at timestamptz,
+    created_at timestamptz not null default now()
+);
+alter table public.project_invites enable row level security;
+grant select, insert on public.project_invites to authenticated;
+-- Jeder eingeloggte Nutzer darf einen Code lesen (zum Beitreten); anlegen dürfen Admins
+create policy "invites read by code" on public.project_invites for select using (auth.uid() is not null);
+create policy "invites admin create" on public.project_invites for insert with check (public.is_project_admin(project_id));
+
 create policy "projects read" on public.projects for select using (public.is_project_member(id));
 create policy "projects create" on public.projects for insert with check (auth.uid() = creator_id);
 create policy "projects admin update" on public.projects for update using (public.is_project_admin(id));

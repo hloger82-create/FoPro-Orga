@@ -36,6 +36,7 @@ import de.naturfoto.app.auth.AuthScreen
 import de.naturfoto.app.map.ProjectMap
 import de.naturfoto.app.ebird.EBirdScreen
 import de.naturfoto.app.profile.ProfileScreen
+import de.naturfoto.app.projects.ProjectPickerScreen
 import de.naturfoto.app.surveys.SurveysScreen
 import de.naturfoto.app.timeline.TimelineScreen
 import de.naturfoto.app.theme.NaturfotoTheme
@@ -63,8 +64,16 @@ fun NaturfotoApp() {
         var projectId by remember { mutableStateOf<String?>(null) }
         var mapFocus by remember { mutableStateOf<Pair<Double, Double>?>(null) }
         var selectedArea by remember { mutableStateOf<Pair<String, String>?>(null) }
-        LaunchedEffect(Unit) {
-            if (projectId == null) projectId = AreasRepository().firstProjectIdForUser()
+        if (projectId == null) {
+            ProjectPickerScreen(
+                onSelectProject = { projectId = it },
+                onLogout = {
+                    scope.launch { AuthRepository().signOut() }
+                    signedIn = false
+                    projectId = null
+                },
+            )
+            return@NaturfotoTheme
         }
         Scaffold(
             bottomBar = {
