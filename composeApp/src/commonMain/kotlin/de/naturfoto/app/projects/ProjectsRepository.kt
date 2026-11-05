@@ -51,6 +51,27 @@ class ProjectsRepository {
         return code
     }
 
+    suspend fun leaveProject(projectId: String) {
+        db["project_members"].delete {
+            filter {
+                eq("project_id", projectId)
+                eq("user_id", userId ?: "")
+            }
+        }
+    }
+
+    suspend fun members(projectId: String): List<JsonObject> =
+        db["project_members"].select {
+            filter { eq("project_id", projectId) }
+        }.decodeList<JsonObject>()
+            .map { m ->
+                val profile = db["profiles"].select { filter { eq("id", m.str("user_id")) } }
+                    .decodeList<JsonObject>().firstOrNull()
+                JsonObject(m.toMutableMap().apply {
+                    put("display_name", kotlinx.serialization.json.JsonPrimitive(profile?.str("display_name") ?: "?"))
+                })
+            }
+
     suspend fun joinByCode(code: String): Result<String> = runCatching {
         val invite = db["project_invites"].select {
             filter { eq("code", code.trim().lowercase()) }

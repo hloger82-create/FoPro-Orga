@@ -31,7 +31,7 @@ import kotlinx.serialization.json.JsonObject
 
 @Composable
 fun ProjectPickerScreen(
-    onSelectProject: (String) -> Unit,
+    onSelectProject: (String, String) -> Unit,
     onLogout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -61,7 +61,7 @@ fun ProjectPickerScreen(
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
             items(projects, key = { it.str("id") }) { p ->
-                Card(modifier = Modifier.fillMaxWidth(), onClick = { onSelectProject(p.str("id")) }) {
+                Card(modifier = Modifier.fillMaxWidth(), onClick = { onSelectProject(p.str("id"), p.str("name")) }) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(p.str("name"), style = MaterialTheme.typography.titleMedium)
                         Text("Rolle: ${p.str("my_role")}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
@@ -93,7 +93,7 @@ fun ProjectPickerScreen(
                             try {
                                 val id = repo.createProject(newName.trim(), newDesc.trim().ifBlank { null })
                                 showCreate = false
-                                onSelectProject(id)
+                                onSelectProject(id, newName.trim())
                             } catch (e: Exception) { error = e.message }
                         }
                     },
@@ -117,7 +117,7 @@ fun ProjectPickerScreen(
                             res.onSuccess { id ->
                                 showJoin = false
                                 load()
-                                onSelectProject(id)
+                                onSelectProject(id, projects.firstOrNull { it.str("id") == id }?.str("name") ?: "Projekt")
                             }.onFailure { error = it.message }
                         }
                     },
