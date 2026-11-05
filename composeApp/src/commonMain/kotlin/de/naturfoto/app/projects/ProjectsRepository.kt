@@ -21,7 +21,7 @@ class ProjectsRepository {
             .mapNotNull { m ->
                 db["projects"].select { filter { eq("id", m.str("project_id")) } }
                     .decodeList<JsonObject>().firstOrNull()
-                    ?.let { p -> p + ("my_role" to kotlinx.serialization.json.JsonPrimitive(m.str("role"))) }
+                    ?.let { p -> JsonObject(p.toMutableMap().apply { put("my_role", kotlinx.serialization.json.JsonPrimitive(m.str("role"))) }) }
             }
 
     suspend fun createProject(name: String, description: String?): String {

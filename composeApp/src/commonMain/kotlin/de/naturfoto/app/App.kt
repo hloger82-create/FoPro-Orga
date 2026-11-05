@@ -31,6 +31,7 @@ import de.naturfoto.app.areas.AreaDetailScreen
 import de.naturfoto.app.areas.AreasRepository
 import de.naturfoto.app.areas.AreasScreen
 import de.naturfoto.app.auth.AuthRepository
+import kotlinx.coroutines.launch
 import de.naturfoto.app.calendar.CalendarScreen
 import de.naturfoto.app.chat.ChatScreen
 import de.naturfoto.app.auth.AuthScreen
