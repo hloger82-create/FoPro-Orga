@@ -41,17 +41,23 @@ fun ProjectOverviewScreen(
     val scope = rememberCoroutineScope()
 
     var members by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var memberProfiles by remember { mutableStateOf<Map<String, JsonObject>>(emptyMap()) }
     var isAdmin by remember { mutableStateOf(false) }
     var myIdLocal by remember { mutableStateOf<String?>(null) }
     var inviteCode by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var memberProfile by remember { mutableStateOf<JsonObject?>(null) }
 
     fun load() {
         scope.launch {
             try {
                 members = repo.members(projectId)
                 myIdLocal = de.naturfoto.app.data.Supabase.client.auth.currentUserOrNull()?.id
+                val profs = de.naturfoto.app.data.Supabase.client.postgrest["profiles"].select {
+                    filter { `in`("id", members.map { it.str("user_id") }) }
+                }.decodeList<JsonObject>()
+                memberProfiles = profs.associateBy { it.str("id") }
                 isAdmin = members.any { it.str("user_id") == myIdLocal && it.str("role") == "admin" }
             } catch (e: Exception) { error = e.message }
         }
@@ -81,7 +87,7 @@ fun ProjectOverviewScreen(
         Text("Mitglieder (${members.size})", style = MaterialTheme.typography.titleMedium)
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
             items(members, key = { it.str("user_id") }) { m ->
-                Card(modifier = Modifier.fillMaxWidth()) {
+                Card(modifier = Modifier.fillMaxWidth(), onClick = { memberProfile = m }) {
                     Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                         Text(m.str("display_name"))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
@@ -105,6 +111,22 @@ fun ProjectOverviewScreen(
                 colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
             ) { Text("Projekt löschen") }
         }
+    }
+
+    memberProfile?.let { mp ->
+        AlertDialog(
+            onDismissRequest = { memberProfile = null },
+            title = { Text(mp.str("display_name")) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("Rolle: ${mp.str("role")}")
+                    val p = memberProfiles[mp.str("user_id")]
+                    p?.str("bio")?.takeIf { it.isNotBlank() }?.let { Text("„$it“") }
+                    p?.str("skill_tags")?.takeIf { it.isNotBlank() }?.let { Text("Skills: $it") }
+                }
+            },
+            confirmButton = { TextButton(onClick = { memberProfile = null }) { Text("Schließen") } },
+        )
     }
 
     if (showDeleteConfirm) {
