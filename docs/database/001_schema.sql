@@ -353,7 +353,14 @@ returns boolean language sql stable security definer as $$
 $$;
 
 -- Profile: eigenes Profil schreiben, alle Mitglieder lesen
-create policy "profiles read" on public.profiles for select using (true);
+-- Profile nur für Selbst und Mitglieder gemeinsamer Projekte sichtbar
+create policy "profiles read" on public.profiles for select using (
+    auth.uid() = id
+    or public.is_project_member((select project_id from public.project_members where user_id = profiles.id limit 1))
+);
+-- eBird-API-Key-Spalte ist für niemanden außer den Owner lesbar
+revoke select (ebird_api_key) on public.profiles from authenticated;
+grant select (id, username, display_name, bio, avatar_url, homepage, socials, skill_tags, member_since, show_homepage_publicly, show_socials_publicly, ebird_enabled, created_at) on public.profiles to authenticated;
 create policy "profiles self upsert" on public.profiles for insert with check (auth.uid() = id);
 create policy "profiles self update" on public.profiles for update using (auth.uid() = id);
 
