@@ -46,7 +46,6 @@ import de.naturfoto.app.data.str
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
 
-@Composable
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun AreaDetailScreen(
@@ -198,7 +197,9 @@ fun AreaDetailScreen(
                                 )
                                 androidx.compose.material3.DropdownMenu(expanded = recipientMenuOpen, onDismissRequest = { recipientMenuOpen = false }) {
                                     members.filter { it.str("user_id") != repo.userIdSafe() }.forEach { m ->
-                                        DropdownMenuItem(text = { Text(m.str("display_name")) }, onClick = { recipientId = m.str("user_id"); recipientMenuOpen = false })
+                                        androidx.compose.material3.TextButton(onClick = { recipientId = m.str("user_id"); recipientMenuOpen = false }) {
+                                            Text(m.str("display_name"))
+                                        }
                                     }
                                 }
                             }
