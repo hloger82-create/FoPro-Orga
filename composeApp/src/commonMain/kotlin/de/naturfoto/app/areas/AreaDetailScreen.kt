@@ -62,6 +62,8 @@ fun AreaDetailScreen(
 
     var postTitle by remember { mutableStateOf("") }
     var postAudience by remember { mutableStateOf("area") }
+    var areaNameLocal by remember { mutableStateOf(areaName) }
+    var projectName by remember { mutableStateOf("Projekt") }
     var postBody by remember { mutableStateOf("") }
     var threadTitle by remember { mutableStateOf("") }
     var threadFirstPost by remember { mutableStateOf("") }
@@ -77,6 +79,9 @@ fun AreaDetailScreen(
         try {
             forumId = repo.forumForArea(areaId)
             subscribed = repo.isSubscribed(areaId)
+            val names = repo.areaAndProjectNames(areaId)
+            areaNameLocal = names.first
+            projectName = names.second
         } catch (e: Exception) { error = e.message }
         loadFeed()
     }
@@ -165,9 +170,10 @@ fun AreaDetailScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(postTitle, { postTitle = it }, label = { Text("Titel") }, singleLine = true)
                         OutlinedTextField(postBody, { postBody = it }, label = { Text("Text") }, minLines = 3)
+                        Text("Posten in:", style = MaterialTheme.typography.labelMedium)
                         androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilterChip(selected = postAudience == "area", onClick = { postAudience = "area" }, label = { Text("Area") })
-                            FilterChip(selected = postAudience == "project", onClick = { postAudience = "project" }, label = { Text("Projekt") })
+                            FilterChip(selected = postAudience == "area", onClick = { postAudience = "area" }, label = { Text(areaNameLocal) })
+                            FilterChip(selected = postAudience == "project", onClick = { postAudience = "project" }, label = { Text(projectName) })
                         }
                     }
                 },

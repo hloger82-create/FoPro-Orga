@@ -61,6 +61,12 @@ class AreasRepository {
         db["forums"].select { filter { eq("area_id", areaId) } }
             .decodeList<kotlinx.serialization.json.JsonObject>()
 
+    suspend fun areaAndProjectNames(areaId: String): Pair<String, String> {
+        val area = db["areas"].select { filter { eq("id", areaId) } }.decodeList<kotlinx.serialization.json.JsonObject>().first()
+        val project = db["projects"].select { filter { eq("id", area.str("project_id")) } }.decodeList<kotlinx.serialization.json.JsonObject>().first()
+        return area.str("name") to project.str("name")
+    }
+
     suspend fun forumForArea(areaId: String): String? =
         listForums(areaId).firstOrNull()?.str("id")
 
