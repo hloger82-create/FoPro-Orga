@@ -67,7 +67,13 @@ private enum class MoreEntry(val label: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NaturfotoApp() {
-    NaturfotoTheme {
+    var themeMode by remember { mutableStateOf(de.naturfoto.app.theme.ThemeModeStore.get()) }
+    val dark = when (themeMode) {
+        de.naturfoto.app.theme.ThemeMode.LIGHT -> false
+        de.naturfoto.app.theme.ThemeMode.DARK -> true
+        de.naturfoto.app.theme.ThemeMode.SYSTEM -> androidx.compose.foundation.isSystemInDarkTheme()
+    }
+    NaturfotoTheme(darkTheme = dark) {
         val scope = rememberCoroutineScope()
         var signedIn by remember { mutableStateOf(AuthRepository().currentUserId() != null) }
         if (!signedIn) {
@@ -171,7 +177,7 @@ fun NaturfotoApp() {
                         moreEntry = null
                         tab = Tab.MAP
                     })
-                    moreEntry == MoreEntry.PROFILE && pid != null -> ProfileScreen(projectId = pid, modifier = Modifier)
+                    moreEntry == MoreEntry.PROFILE && pid != null -> ProfileScreen(projectId = pid, modifier = Modifier, onThemeModeChange = { themeMode = it })
                     tab == Tab.TIMELINE && pid != null -> TimelineScreen(projectId = pid)
                     tab == Tab.AREAS -> {
                         val area = selectedArea

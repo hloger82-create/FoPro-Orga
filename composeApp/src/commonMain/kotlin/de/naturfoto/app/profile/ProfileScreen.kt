@@ -43,7 +43,8 @@ import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
 
 @Composable
-fun ProfileScreen(projectId: String, modifier: Modifier = Modifier) {
+fun ProfileScreen(
+    onThemeModeChange: (de.naturfoto.app.theme.ThemeMode) -> Unit = {},projectId: String, modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val userId = Supabase.client.auth.currentUserOrNull()?.id
 
@@ -51,6 +52,7 @@ fun ProfileScreen(projectId: String, modifier: Modifier = Modifier) {
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var saved by remember { mutableStateOf(false) }
+    var themeMode by remember { mutableStateOf(de.naturfoto.app.theme.ThemeModeStore.get()) }
 
     var username by remember { mutableStateOf("") }
     var displayName by remember { mutableStateOf("") }
@@ -147,6 +149,20 @@ fun ProfileScreen(projectId: String, modifier: Modifier = Modifier) {
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
+            Text("Darstellung", style = MaterialTheme.typography.titleMedium)
+            androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                de.naturfoto.app.theme.ThemeMode.entries.forEach { m ->
+                    androidx.compose.material3.FilterChip(
+                        selected = themeMode == m,
+                        onClick = {
+                            themeMode = m
+                            de.naturfoto.app.theme.ThemeModeStore.set(m)
+                            onThemeModeChange(m)
+                        },
+                        label = { Text(when (m) { de.naturfoto.app.theme.ThemeMode.SYSTEM -> "System"; de.naturfoto.app.theme.ThemeMode.LIGHT -> "Hell"; de.naturfoto.app.theme.ThemeMode.DARK -> "Dunkel" }) },
+                    )
+                }
+            }
             val ebirdRepo = remember { de.naturfoto.app.ebird.EBirdRepository() }
             Button(
                 enabled = !ebirdLoading && ebirdApiKey.isNotBlank(),
