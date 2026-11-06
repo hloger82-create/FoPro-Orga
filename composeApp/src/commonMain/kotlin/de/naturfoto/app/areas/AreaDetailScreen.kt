@@ -188,7 +188,7 @@ fun AreaDetailScreen(
                         }
                         if (postAudience == "dm") {
                             Text("Empfänger:", style = MaterialTheme.typography.labelMedium)
-                            members.filter { it.str("user_id") != repo.userIdSafe() }.forEach { m ->
+                            members.filter { it.str("user_id") != repo.userIdSafe }.forEach { m ->
                                 FilterChip(
                                     selected = recipientId == m.str("user_id"),
                                     onClick = { recipientId = m.str("user_id") },
@@ -205,21 +205,7 @@ fun AreaDetailScreen(
                             FilterChip(selected = postAudience == "dm", onClick = { postAudience = "dm" }, label = { Text("DM an…") })
                         }
                         if (postAudience == "dm") {
-                            ExposedDropdownMenuBox(expanded = recipientMenuOpen, onExpandedChange = { recipientMenuOpen = it }) {
-                                OutlinedTextField(
-                                    value = members.firstOrNull { it.str("user_id") == recipientId }?.str("display_name") ?: "Empfänger wählen",
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(recipientMenuOpen) },
-                                    modifier = Modifier.fillMaxWidth().menuAnchor(),
-                                )
-                                androidx.compose.material3.DropdownMenu(expanded = recipientMenuOpen, onDismissRequest = { recipientMenuOpen = false }) {
-                                    members.filter { it.str("user_id") != repo.userIdSafe() }.forEach { m ->
-                                        androidx.compose.material3.TextButton(onClick = { recipientId = m.str("user_id"); recipientMenuOpen = false }) {
-                                            Text(m.str("display_name"))
-                                        }
-                                    }
-                                }
+                                                            }
                             }
                         }
                     }
