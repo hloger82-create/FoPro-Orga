@@ -55,10 +55,14 @@ fun ProjectOverviewScreen(
             try {
                 members = repo.members(projectId)
                 myIdLocal = de.naturfoto.app.data.Supabase.client.auth.currentUserOrNull()?.id
-                val profs = de.naturfoto.app.data.Supabase.client.postgrest["profiles"].select {
-                    filter { `in`("id", members.map { it.str("user_id") }) }
-                }.decodeList<JsonObject>()
-                memberProfiles = profs.associateBy { it.str("id") }
+                memberProfiles = members.mapNotNull { m ->
+                    try {
+                        val p = de.naturfoto.app.data.Supabase.client.postgrest["profiles"].select {
+                            filter { eq("id", m.str("user_id")) }
+                        }.decodeList<JsonObject>().firstOrNull()
+                        p?.let { m.str("user_id") to it }
+                    } catch (_: Exception) { null }
+                }.toMap()
                 isAdmin = members.any { it.str("user_id") == myIdLocal && it.str("role") == "admin" }
             } catch (e: Exception) { error = e.message }
         }
