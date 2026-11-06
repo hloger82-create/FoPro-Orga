@@ -164,8 +164,8 @@ fun NaturfotoApp() {
                 }
                 val pid = projectId
                 when {
-                    moreEntry == MoreEntry.CALENDAR && pid != null -> CalendarScreen(projectId = pid)
-                    moreEntry == MoreEntry.SURVEYS && pid != null -> SurveysScreen(projectId = pid)
+                    moreEntry == MoreEntry.CALENDAR && pid != null -> CalendarScreen(projectId = pid, defaultAreaId = selectedArea?.first)
+                    moreEntry == MoreEntry.SURVEYS && pid != null -> SurveysScreen(projectId = pid, defaultAreaId = selectedArea?.first)
                     moreEntry == MoreEntry.EBIRD && pid != null -> EBirdScreen(projectId = pid, onOpenOnMap = { lat, lng ->
                         mapFocus = lat to lng
                         moreEntry = null

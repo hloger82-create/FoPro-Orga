@@ -41,6 +41,7 @@ import kotlinx.serialization.json.JsonObject
 
 @Composable
 fun CalendarScreen(
+    defaultAreaId: String? = null,
     projectId: String,
     modifier: Modifier = Modifier,
 ) {
@@ -57,7 +58,7 @@ fun CalendarScreen(
     var selectedDay by remember { mutableStateOf(today.dayOfMonth) }
     var showCreate by remember { mutableStateOf(false) }
     var areas by remember { mutableStateOf<List<kotlinx.serialization.json.JsonObject>>(emptyList()) }
-    var eventAreaId by remember { mutableStateOf<String?>(null) }
+    var eventAreaId by remember { mutableStateOf<String?>(defaultAreaId) }
     var showMapPicker by remember { mutableStateOf(false) }
 
     fun load() {

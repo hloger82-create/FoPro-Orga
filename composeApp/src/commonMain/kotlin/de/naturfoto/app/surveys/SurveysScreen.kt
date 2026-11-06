@@ -43,6 +43,7 @@ import kotlinx.serialization.json.JsonObject
 
 @Composable
 fun SurveysScreen(
+    defaultAreaId: String? = null,
     projectId: String,
     modifier: Modifier = Modifier,
 ) {
@@ -58,7 +59,7 @@ fun SurveysScreen(
     var question by remember { mutableStateOf("") }
     var optionsText by remember { mutableStateOf("") }
     var multiple by remember { mutableStateOf(false) }
-    var surveyAreaId by remember { mutableStateOf<String?>(null) }
+    var surveyAreaId by remember { mutableStateOf<String?>(defaultAreaId) }
     var surveyAreas by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var dateText by remember { mutableStateOf("") }
     var timeText by remember { mutableStateOf("") }
