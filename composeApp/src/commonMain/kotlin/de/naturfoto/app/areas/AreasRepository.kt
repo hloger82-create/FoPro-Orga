@@ -108,7 +108,7 @@ class AreasRepository {
         val threads = listThreads(forumId).map { t ->
             kotlinx.serialization.json.JsonObject(t.toMutableMap().apply {
                 put("kind", kotlinx.serialization.json.JsonPrimitive("thread"))
-                put("title", get("title"))
+                put("title", t["title"] ?: kotlinx.serialization.json.JsonNull)
                 put("body", kotlinx.serialization.json.JsonPrimitive(str2(t, "first_post")))
                 put("area_id", kotlinx.serialization.json.JsonPrimitive(areaId))
             })
