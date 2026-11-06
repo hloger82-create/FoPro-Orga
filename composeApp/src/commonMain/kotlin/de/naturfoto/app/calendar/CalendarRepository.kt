@@ -10,6 +10,12 @@ import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.serialization.json.JsonObject
 
 class CalendarRepository {
+    suspend fun listAreas(projectId: String): List<JsonObject> =
+        Supabase.client.postgrest["areas"].select {
+            filter { eq("project_id", projectId) }
+            order("name", io.github.jan.supabase.postgrest.query.Order.ASCENDING)
+        }.decodeList<JsonObject>()
+
     private val db get() = Supabase.client.postgrest
     private val userId get() = Supabase.client.auth.currentUserOrNull()?.id
 
