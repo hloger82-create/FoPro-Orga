@@ -56,6 +56,8 @@ fun CalendarScreen(
     var month by remember { mutableStateOf(today.withDayOfMonth(1)) }
     var selectedDay by remember { mutableStateOf(today.dayOfMonth) }
     var showCreate by remember { mutableStateOf(false) }
+    var areas by remember { mutableStateOf<List<kotlinx.serialization.json.JsonObject>>(emptyList()) }
+    var eventAreaId by remember { mutableStateOf<String?>(null) }
     var showMapPicker by remember { mutableStateOf(false) }
 
     fun load() {
@@ -68,7 +70,9 @@ fun CalendarScreen(
             }
         }
     }
-    LaunchedEffect(projectId) { load() }
+    LaunchedEffect(projectId) {
+        areas = try { repo.listAreas(projectId) } catch (_: Exception) { emptyList() }
+ load() }
 
     var title by remember { mutableStateOf("") }
     var desc by remember { mutableStateOf("") }
@@ -184,6 +188,11 @@ fun CalendarScreen(
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(selected = kind == "on_site", onClick = { kind = "on_site" }, label = { Text("Vor Ort") })
+                        Text("Für:", style = MaterialTheme.typography.labelMedium)
+                        androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilterChip(selected = eventAreaId == null, onClick = { eventAreaId = null }, label = { Text("Ganzes Projekt") })
+                            areas.forEach { a -> FilterChip(selected = eventAreaId == a.str("id"), onClick = { eventAreaId = a.str("id") }, label = { Text(a.str("name")) }) }
+                        }
                             FilterChip(selected = kind == "online", onClick = { kind = "online" }, label = { Text("Online") })
                         }
                         if (kind == "on_site") {
@@ -218,6 +227,7 @@ fun CalendarScreen(
                                         start = startIso,
                                         end = endIso,
                                         maxParticipants = null,
+                                    areaId = eventAreaId,
                                     )
                                     showCreate = false
                                     load()

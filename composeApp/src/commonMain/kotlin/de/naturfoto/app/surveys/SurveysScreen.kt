@@ -58,6 +58,8 @@ fun SurveysScreen(
     var question by remember { mutableStateOf("") }
     var optionsText by remember { mutableStateOf("") }
     var multiple by remember { mutableStateOf(false) }
+    var surveyAreaId by remember { mutableStateOf<String?>(null) }
+    var surveyAreas by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var dateText by remember { mutableStateOf("") }
     var timeText by remember { mutableStateOf("") }
 
@@ -72,7 +74,10 @@ fun SurveysScreen(
             }
         }
     }
-    LaunchedEffect(projectId) { load() }
+    LaunchedEffect(projectId) {
+        load()
+        surveyAreas = try { de.naturfoto.app.areas.AreasRepository().listAreas(projectId) } catch (_: Exception) { emptyList() }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -171,6 +176,11 @@ fun SurveysScreen(
                             Text("Mehrfachauswahl")
                             Switch(multiple, { multiple = it })
                         }
+                        Text("Gilt für:", style = MaterialTheme.typography.labelMedium)
+                        androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            androidx.compose.material3.FilterChip(selected = surveyAreaId == null, onClick = { surveyAreaId = null }, label = { Text("Ganzes Projekt") })
+                            surveyAreas.forEach { a -> androidx.compose.material3.FilterChip(selected = surveyAreaId == a.str("id"), onClick = { surveyAreaId = a.str("id") }, label = { Text(a.str("name")) }) }
+                        }
                     }
                 },
                 confirmButton = {
@@ -184,8 +194,8 @@ fun SurveysScreen(
                                     val endsAt = parseDeadline(dateText.trim(), timeText.trim())
                                     repo.createSurvey(
                                         projectId = projectId,
-                                        scope = "project",
-                                        areaId = null,
+                                        scope = if (surveyAreaId == null) "project" else "area",
+                                        areaId = surveyAreaId,
                                         question = question.trim(),
                                         options = optionsText.lines().map { it.trim() }.filter { it.isNotEmpty() },
                                         multipleChoice = multiple,

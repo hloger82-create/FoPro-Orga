@@ -30,10 +30,12 @@ class CalendarRepository {
         start: String,
         end: String?,
         maxParticipants: Int?,
+        areaId: String? = null,
     ) {
         db["events"].insert(
             jsonOf(
                 "project_id" to projectId,
+                "area_id" to areaId,
                 "title" to title,
                 "description" to description,
                 "kind" to kind,

@@ -196,6 +196,7 @@ create table if not exists public.events (
     location_lat double precision,
     location_lng double precision,
     map_link text,
+    area_id uuid references public.areas(id) on delete cascade,
     start_time timestamptz not null,
     end_time timestamptz,
     max_participants int,
