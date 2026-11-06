@@ -117,7 +117,7 @@ class AreasRepository {
     }
 
     private fun str2(o: kotlinx.serialization.json.JsonObject, k: String): String =
-        (o[k] as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull ?: ""
+        (o[k] as? kotlinx.serialization.json.JsonPrimitive)?.let { de.naturfoto.app.data.textOrNull(it) } ?: ""
 
     suspend fun listThreads(forumId: String): List<kotlinx.serialization.json.JsonObject> =
         db["threads"].select {
