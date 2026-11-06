@@ -18,6 +18,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -44,6 +47,8 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
 
 @Composable
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
 fun AreaDetailScreen(
     areaId: String,
     areaName: String,
@@ -64,6 +69,10 @@ fun AreaDetailScreen(
     var postAudience by remember { mutableStateOf("area") }
     var areaNameLocal by remember { mutableStateOf(areaName) }
     var projectName by remember { mutableStateOf("Projekt") }
+    var projectIdLocal by remember { mutableStateOf<String?>(null) }
+    var members by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var recipientId by remember { mutableStateOf<String?>(null) }
+    var recipientMenuOpen by remember { mutableStateOf(false) }
     var postBody by remember { mutableStateOf("") }
     var threadTitle by remember { mutableStateOf("") }
     var threadFirstPost by remember { mutableStateOf("") }
@@ -82,6 +91,8 @@ fun AreaDetailScreen(
             val names = repo.areaAndProjectNames(areaId)
             areaNameLocal = names.first
             projectName = names.second
+            projectIdLocal = repo.projectIdOfArea(areaId)
+            if (projectIdLocal != null) members = repo.projectMembers(projectIdLocal!!)
         } catch (e: Exception) { error = e.message }
         loadFeed()
     }
@@ -174,16 +185,33 @@ fun AreaDetailScreen(
                         androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilterChip(selected = postAudience == "area", onClick = { postAudience = "area" }, label = { Text(areaNameLocal) })
                             FilterChip(selected = postAudience == "project", onClick = { postAudience = "project" }, label = { Text(projectName) })
+                            FilterChip(selected = postAudience == "dm", onClick = { postAudience = "dm"; recipientMenuOpen = true }, label = { Text("DM an…") })
+                        }
+                        if (postAudience == "dm") {
+                            ExposedDropdownMenuBox(expanded = recipientMenuOpen, onExpandedChange = { recipientMenuOpen = it }) {
+                                OutlinedTextField(
+                                    value = members.firstOrNull { it.str("user_id") == recipientId }?.str("display_name") ?: "Empfänger wählen",
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(recipientMenuOpen) },
+                                    modifier = Modifier.fillMaxWidth().menuAnchor(),
+                                )
+                                androidx.compose.material3.DropdownMenu(expanded = recipientMenuOpen, onDismissRequest = { recipientMenuOpen = false }) {
+                                    members.filter { it.str("user_id") != repo.userIdSafe() }.forEach { m ->
+                                        DropdownMenuItem(text = { Text(m.str("display_name")) }, onClick = { recipientId = m.str("user_id"); recipientMenuOpen = false })
+                                    }
+                                }
+                            }
                         }
                     }
                 },
                 confirmButton = {
                     TextButton(
-                        enabled = postTitle.isNotBlank(),
+                        enabled = postTitle.isNotBlank() && (postAudience != "dm" || recipientId != null),
                         onClick = {
                             scope.launch {
                                 try {
-                                    repo.createPost(areaId, null, postTitle.trim(), postBody.trim(), audience = postAudience)
+                                    repo.createPost(areaId, null, postTitle.trim(), postBody.trim(), audience = postAudience, recipientId = recipientId)
                                     showNewPost = false
                                     postTitle = ""
                                     postBody = ""

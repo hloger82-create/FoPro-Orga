@@ -15,6 +15,7 @@ private val json = Json { ignoreUnknownKeys = true }
 @Suppress("UNCHECKED_CAST")
 class AreasRepository {
     private val db get() = Supabase.client.postgrest
+    val userIdSafe: String? get() = userId
     private val userId get() = Supabase.client.auth.currentUserOrNull()?.id
 
     suspend fun firstProjectIdForUser(): String? {
@@ -60,6 +61,22 @@ class AreasRepository {
     suspend fun listForums(areaId: String): List<kotlinx.serialization.json.JsonObject> =
         db["forums"].select { filter { eq("area_id", areaId) } }
             .decodeList<kotlinx.serialization.json.JsonObject>()
+
+    suspend fun projectMembers(projectId: String): List<kotlinx.serialization.json.JsonObject> {
+        val members = db["project_members"].select { filter { eq("project_id", projectId) } }
+            .decodeList<kotlinx.serialization.json.JsonObject>()
+        return members.map { m ->
+            val prof = db["profiles"].select { filter { eq("id", m.str("user_id")) } }
+                .decodeList<kotlinx.serialization.json.JsonObject>().firstOrNull()
+            kotlinx.serialization.json.JsonObject(m.toMutableMap().apply {
+                put("display_name", kotlinx.serialization.json.JsonPrimitive(prof?.str("display_name") ?: "?"))
+            })
+        }
+    }
+
+    suspend fun projectIdOfArea(areaId: String): String? =
+        db["areas"].select { filter { eq("id", areaId) } }.decodeList<kotlinx.serialization.json.JsonObject>()
+            .firstOrNull()?.str("project_id")
 
     suspend fun areaAndProjectNames(areaId: String): Pair<String, String> {
         val area = db["areas"].select { filter { eq("id", areaId) } }.decodeList<kotlinx.serialization.json.JsonObject>().first()
