@@ -4,6 +4,7 @@ import de.naturfoto.app.data.Supabase
 import de.naturfoto.app.data.bool
 import de.naturfoto.app.data.jsonOf
 import de.naturfoto.app.data.str
+import de.naturfoto.app.data.textOrNull
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Order
@@ -117,7 +118,7 @@ class AreasRepository {
     }
 
     private fun str2(o: kotlinx.serialization.json.JsonObject, k: String): String =
-        (o[k] as? kotlinx.serialization.json.JsonPrimitive)?.let { de.naturfoto.app.data.textOrNull(it) } ?: ""
+        (o[k] as? kotlinx.serialization.json.JsonPrimitive)?.textOrNull ?: ""
 
     suspend fun listThreads(forumId: String): List<kotlinx.serialization.json.JsonObject> =
         db["threads"].select {
