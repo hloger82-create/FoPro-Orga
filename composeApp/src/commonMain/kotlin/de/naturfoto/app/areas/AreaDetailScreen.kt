@@ -52,41 +52,39 @@ fun AreaDetailScreen(
     val repo = remember { AreasRepository() }
     val scope = rememberCoroutineScope()
 
-    var tab by remember { mutableStateOf(0) } // 0 = Pinnwand, 1 = Forum/Threads
     var forumId by remember { mutableStateOf<String?>(null) }
-    var posts by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
-    var threads by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var feed by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
     var selectedThread by remember { mutableStateOf<JsonObject?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var showNewPost by remember { mutableStateOf(false) }
     var showNewThread by remember { mutableStateOf(false) }
 
     var postTitle by remember { mutableStateOf("") }
+    var postAudience by remember { mutableStateOf("area") }
     var postBody by remember { mutableStateOf("") }
     var threadTitle by remember { mutableStateOf("") }
     var threadFirstPost by remember { mutableStateOf("") }
     var subscribed by remember { mutableStateOf(true) }
 
-    fun loadPosts() {
+    fun loadFeed() {
         scope.launch {
-            try { posts = repo.listPosts(areaId, null) } catch (e: Exception) { error = e.message }
+            try { feed = repo.feedForArea(areaId) } catch (e: Exception) { error = e.message }
         }
     }
 
     LaunchedEffect(areaId) {
         try {
             forumId = repo.forumForArea(areaId)
-            if (forumId != null) threads = repo.listThreads(forumId!!)
             subscribed = repo.isSubscribed(areaId)
         } catch (e: Exception) { error = e.message }
-        loadPosts()
+        loadFeed()
     }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                if (tab == 0) showNewPost = true else showNewThread = true
+                showNewPost = true
             }) {
                 Icon(Icons.Default.Add, contentDescription = "Neu")
             }
@@ -115,25 +113,16 @@ fun AreaDetailScreen(
                 color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
-            TabRow(selectedTabIndex = tab) {
-                Tab(selected = tab == 0, onClick = { tab = 0; selectedThread = null }, text = { Text("Pinnwand") })
-                Tab(selected = tab == 1, onClick = { tab = 1; selectedThread = null }, text = { Text("Forum") })
-            }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
 
             if (selectedThread != null) {
                 ThreadDetail(thread = selectedThread!!, repo = repo, onBack = { selectedThread = null })
-            } else if (tab == 0) {
-                PostList(posts, repo = repo, onDelete = { id ->
+            } else {
+                FeedList(feed, repo = repo, onOpenThread = { selectedThread = it }, onDelete = { id ->
                     scope.launch {
-                        try { repo.deletePost(id); loadPosts() } catch (e: Exception) { error = e.message }
+                        try { repo.deletePost(id); loadFeed() } catch (e: Exception) { error = e.message }
                     }
                 })
-            } else {
-                ThreadList(
-                    threads = threads,
-                    onOpenThread = { selectedThread = it },
-                )
             }
         }
 
@@ -175,6 +164,10 @@ fun AreaDetailScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(postTitle, { postTitle = it }, label = { Text("Titel") }, singleLine = true)
                         OutlinedTextField(postBody, { postBody = it }, label = { Text("Text") }, minLines = 3)
+                        androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilterChip(selected = postAudience == "area", onClick = { postAudience = "area" }, label = { Text("Area") })
+                            FilterChip(selected = postAudience == "project", onClick = { postAudience = "project" }, label = { Text("Projekt") })
+                        }
                     }
                 },
                 confirmButton = {
@@ -183,11 +176,11 @@ fun AreaDetailScreen(
                         onClick = {
                             scope.launch {
                                 try {
-                                    repo.createPost(areaId, null, postTitle.trim(), postBody.trim())
+                                    repo.createPost(areaId, null, postTitle.trim(), postBody.trim(), audience = postAudience)
                                     showNewPost = false
                                     postTitle = ""
                                     postBody = ""
-                                    loadPosts()
+                                    loadFeed()
                                 } catch (e: Exception) { error = e.message }
                             }
                         },
@@ -199,34 +192,49 @@ fun AreaDetailScreen(
     }
 }
 
+
 @Composable
-private fun PostList(posts: List<JsonObject>, repo: AreasRepository, onDelete: (String) -> Unit) {
-    var expandedPost by remember { mutableStateOf<String?>(null) }
+private fun FeedList(
+    feed: List<JsonObject>,
+    repo: AreasRepository,
+    onOpenThread: (JsonObject) -> Unit,
+    onDelete: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf<String?>(null) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(posts, key = { it.str("id") }) { post ->
-            val id = post.str("id")
+        items(feed, key = { it.str("kind") + it.str("id") }) { item ->
+            val id = item.str("id")
+            val isThread = item.str("kind") == "thread"
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                onClick = { if (isThread) onOpenThread(item) },
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(post.str("title"), style = MaterialTheme.typography.titleMedium)
-                        if (post.bool("pinned")) Text("📌", style = MaterialTheme.typography.bodyMedium)
+                        Text((if (isThread) "🧵 " else "📌 ") + item.str("title"), style = MaterialTheme.typography.titleMedium)
+                        if (item.bool("pinned")) Text("📌", style = MaterialTheme.typography.bodyMedium)
                     }
-                    post.str("body").let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = { expandedPost = if (expandedPost == id) null else id }) {
-                            Text(if (expandedPost == id) "Kommentare ausblenden" else "💬 Kommentieren")
+                    item.str("body").let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                    Text(
+                        if (isThread) "Thread — tippen zum Öffnen" else "Beitrag · ${item.str("audience")}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
+                    if (!isThread) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { expanded = if (expanded == id) null else id }) {
+                                Text(if (expanded == id) "Kommentare ausblenden" else "💬 Kommentieren")
+                            }
+                            TextButton(onClick = { onDelete(id) }) { Text("Löschen") }
                         }
-                        TextButton(onClick = { onDelete(id) }) { Text("Löschen") }
+                        if (expanded == id) CommentSection(repo = repo, postId = id)
                     }
-                    if (expandedPost == id) CommentSection(repo = repo, postId = id)
                 }
             }
         }
@@ -323,31 +331,6 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
     }
 }
 
-@Composable
-private fun ThreadList(
-    threads: List<JsonObject>,
-    onOpenThread: (JsonObject) -> Unit,
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        items(threads, key = { it.str("id") }) { thread ->
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                onClick = { onOpenThread(thread) },
-            ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(thread.str("title"), style = MaterialTheme.typography.titleMedium)
-                    Text(thread.str("first_post").take(120), style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun ThreadDetail(

@@ -81,7 +81,7 @@ class AreasRepository {
         }.decodeList<kotlinx.serialization.json.JsonObject>()
             .filter { (it.str("forum_id")) == (forumId ?: "") }
 
-    suspend fun createPost(areaId: String, forumId: String?, title: String, body: String, imageUrl: String? = null) {
+    suspend fun createPost(areaId: String, forumId: String?, title: String, body: String, imageUrl: String? = null, audience: String = "area", recipientId: String? = null) {
         db["posts"].insert(
             jsonOf(
                 "area_id" to areaId,
@@ -90,6 +90,8 @@ class AreasRepository {
                 "title" to title,
                 "body" to body,
                 "image_url" to imageUrl,
+                "audience" to audience,
+                "recipient_id" to recipientId,
             ),
         )
     }
@@ -97,6 +99,25 @@ class AreasRepository {
     suspend fun deletePost(postId: String) {
         db["posts"].delete { filter { eq("id", postId) } }
     }
+
+    suspend fun feedForArea(areaId: String): List<kotlinx.serialization.json.JsonObject> {
+        val forumId = forumForArea(areaId) ?: return listPosts(areaId, null)
+        val posts = listPosts(areaId, null).map { p ->
+            kotlinx.serialization.json.JsonObject(p.toMutableMap().apply { put("kind", kotlinx.serialization.json.JsonPrimitive("post")) })
+        }
+        val threads = listThreads(forumId).map { t ->
+            kotlinx.serialization.json.JsonObject(t.toMutableMap().apply {
+                put("kind", kotlinx.serialization.json.JsonPrimitive("thread"))
+                put("title", get("title"))
+                put("body", kotlinx.serialization.json.JsonPrimitive(str2(t, "first_post")))
+                put("area_id", kotlinx.serialization.json.JsonPrimitive(areaId))
+            })
+        }
+        return (posts + threads).sortedByDescending { str2(it, "created_at") }
+    }
+
+    private fun str2(o: kotlinx.serialization.json.JsonObject, k: String): String =
+        (o[k] as? kotlinx.serialization.json.JsonPrimitive)?.contentOrNull ?: ""
 
     suspend fun listThreads(forumId: String): List<kotlinx.serialization.json.JsonObject> =
         db["threads"].select {
