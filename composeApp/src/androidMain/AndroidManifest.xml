@@ -11,7 +11,7 @@
     </queries>
     <application
         android:label="Naturfoto"
-        android:theme="@android:style/Theme.Material.NoActionBar">
+        android:theme="@style/Theme.Naturfoto.Splash">
         <activity
             android:name=".MainActivity"
             android:exported="true">

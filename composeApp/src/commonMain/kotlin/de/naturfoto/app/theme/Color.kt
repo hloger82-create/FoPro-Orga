@@ -13,3 +13,8 @@ val Fog = Color(0xFF9AA79B)
 val ScrimTop = Color(0xCC101613)
 val ScrimBottom = Color(0x99101613)
 val SurfaceTranslucent = Color(0xB318211B)
+
+val Paper = Color(0xFFFFFFFF)
+val Ink = Color(0xFF2E3B2E)
+val LeafDark = Color(0xFF556B2F)
+val AmberBright = Color(0xFFFFA500)
