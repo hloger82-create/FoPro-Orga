@@ -196,18 +196,6 @@ fun AreaDetailScreen(
                                 )
                             }
                         }
-                        OutlinedTextField(postTitle, { postTitle = it }, label = { Text("Titel") }, singleLine = true)
-                        OutlinedTextField(postBody, { postBody = it }, label = { Text("Text") }, minLines = 3)
-                        Text("Posten in:", style = MaterialTheme.typography.labelMedium)
-                        androidx.compose.foundation.layout.Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            FilterChip(selected = postAudience == "area", onClick = { postAudience = "area" }, label = { Text(areaNameLocal) })
-                            FilterChip(selected = postAudience == "project", onClick = { postAudience = "project" }, label = { Text(projectName) })
-                            FilterChip(selected = postAudience == "dm", onClick = { postAudience = "dm" }, label = { Text("DM an…") })
-                        }
-                        if (postAudience == "dm") {
-                                                            }
-                            }
-                        }
                     }
                 },
                 confirmButton = {
