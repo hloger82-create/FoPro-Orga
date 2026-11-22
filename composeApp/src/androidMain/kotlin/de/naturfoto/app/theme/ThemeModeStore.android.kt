@@ -21,7 +21,7 @@ actual object ThemeModeStore {
 
 object ReadStore {
     private fun prefs() = AppContextHolder.context.getSharedPreferences("naturfoto_reads", android.content.Context.MODE_PRIVATE)
-    fun readIds(): Set<String> = prefs().getStringSet("read", emptySet()) ?: emptySet()
+    fun readIds(): Set<String> = prefs().getStringSet("read", null) ?: emptySet()
     fun markRead(id: String) {
         val cur = readIds().toMutableSet()
         if (cur.add(id)) prefs().edit().putStringSet("read", cur.takeLast(500).toSet()).apply()
