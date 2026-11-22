@@ -432,6 +432,9 @@ create policy "posts mod pin" on public.posts for update using (public.is_area_m
 
 -- Threads: Area-Mitglieder lesen/erstellen; Kommentare ebenso
 create policy "threads read" on public.threads for select using (public.is_project_member((select a.project_id from public.forums f join public.areas a on a.id = f.area_id where f.id = forum_id)));
+create policy "threads admin update" on public.threads for update using (
+    public.is_project_admin((select a.project_id from public.forums f join public.areas a on a.id = f.area_id where f.id = forum_id))
+);
 create policy "threads member create" on public.threads for insert with check (
     auth.uid() = created_by and public.is_project_member((select a.project_id from public.forums f join public.areas a on a.id = f.area_id where f.id = forum_id)));
 create policy "comments read" on public.post_comments for select using (

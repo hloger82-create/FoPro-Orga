@@ -53,6 +53,7 @@ fun TimelineScreen(
             items(items, key = { "${it.kind}-${it.id}" }) { item ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
+                    onClick = { onOpenItem(item.kind, item.id) },
                     shape = RoundedCornerShape(24.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),

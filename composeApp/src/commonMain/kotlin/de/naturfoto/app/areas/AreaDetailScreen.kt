@@ -259,17 +259,21 @@ private fun FeedList(
                 elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                 onClick = { if (isThread) onOpenThread(item) },
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             if (id !in readIds) {
                                 androidx.compose.foundation.layout.Box(
                                     modifier = Modifier.size(8.dp).background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.CircleShape),
                                 )
                             }
-                            Text((if (isThread) "🧵 " else "📌 ") + item.str("title"), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+                            Text((if (isThread) "🧵 " else "📌 ") + item.str("title"), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                         }
-                        if (item.bool("pinned")) Text("📌", style = MaterialTheme.typography.bodyMedium)
+                        if (isThread && isAdmin) {
+                            androidx.compose.material3.IconButton(onClick = { onPin(id, !item.bool("pinned")) }) {
+                                Text(if (item.bool("pinned")) "📌" else "📍", style = MaterialTheme.typography.bodyMedium)
+                            }
+                        } else if (item.bool("pinned")) Text("📌", style = MaterialTheme.typography.bodyMedium)
                     }
                     val body = item.str("body")
                     val expandedBody = collapsedPosts.contains(id)
@@ -291,11 +295,7 @@ private fun FeedList(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.secondary,
                     )
-                    if (isThread && isAdmin) {
-                        TextButton(onClick = { onPin(id, !item.bool("pinned")) }) {
-                            Text(if (item.bool("pinned")) "📌 Lospinnen" else "📌 Anpinnen")
-                        }
-                    }
+
                     if (!isThread) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(onClick = { expanded = if (expanded == id) null else id }) {
