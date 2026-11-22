@@ -152,6 +152,13 @@ class AreasRepository {
             order("created_at", Order.DESCENDING)
         }.decodeList<kotlinx.serialization.json.JsonObject>()
 
+    suspend fun subscribeThread(threadId: String) {
+        val uid = userId ?: return
+        try {
+            db["thread_subscriptions"].insert(mapOf("thread_id" to threadId, "user_id" to uid))
+        } catch (_: Exception) {}
+    }
+
     suspend fun pinThread(threadId: String, pinned: Boolean) {
         db["threads"].update({ set("pinned", pinned) }) {
             filter { eq("id", threadId) }
@@ -178,6 +185,7 @@ class AreasRepository {
         }.decodeList<kotlinx.serialization.json.JsonObject>()
 
     suspend fun addComment(postId: String? = null, threadId: String? = null, body: String, replyTo: String? = null, quotedText: String? = null) {
+        if (threadId != null) subscribeThread(threadId)
         db["post_comments"].insert(
             jsonOf(
                 "post_id" to postId,

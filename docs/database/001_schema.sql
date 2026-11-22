@@ -137,6 +137,16 @@ create table if not exists public.posts (
     created_at timestamptz not null default now()
 );
 
+create table if not exists public.thread_subscriptions (
+    thread_id uuid not null references public.threads(id) on delete cascade,
+    user_id uuid not null references public.profiles(id) on delete cascade,
+    primary key (thread_id, user_id)
+);
+alter table public.thread_subscriptions enable row level security;
+create policy "thread_subs read own" on public.thread_subscriptions for select using (auth.uid() = user_id);
+create policy "thread_subs self insert" on public.thread_subscriptions for insert with check (auth.uid() = user_id);
+create policy "thread_subs self delete" on public.thread_subscriptions for delete using (auth.uid() = user_id);
+
 -- Threads in Foren (Ersteller gibt Titel vor und verfasst ersten Beitrag)
 create table if not exists public.threads (
     id uuid primary key default uuid_generate_v4(),

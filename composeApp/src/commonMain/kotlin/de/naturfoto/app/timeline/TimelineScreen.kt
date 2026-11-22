@@ -45,6 +45,15 @@ fun TimelineScreen(
 
     Column(modifier = modifier.fillMaxSize()) {
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            androidx.compose.material3.IconButton(onClick = { scope.launch { load() } }) {
+                Icon(androidx.compose.material.icons.Icons.Default.Refresh, contentDescription = "Aktualisieren")
+            }
+        }
+        DisposableEffect(projectId) {
+            scope.launch { load() }
+            onDispose { }
+        }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 20.dp),
@@ -64,6 +73,7 @@ fun TimelineScreen(
                                 when (item.kind) {
                                     "post" -> "📌 Beitrag"
                                     "thread" -> "🧵 Thread"
+                                    "comment" -> "💬 Antwort"
                                     "message" -> "💬 Chat"
                                     else -> "📅 Termin"
                                 } + (if (item.areaName.isNotBlank()) " · ${item.areaName}" else ""),

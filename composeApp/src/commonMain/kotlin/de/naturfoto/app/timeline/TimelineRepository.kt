@@ -72,13 +72,29 @@ class TimelineRepository {
                 order("created_at", Order.DESCENDING)
                 limit(50)
             }.decodeList<JsonObject>().forEach { t ->
-                threads += TimelineItem("thread", t.str("id"), t.str("title"), t.str("first_post").ifBlank { "" }, t.str("created_at"), areas[areaId] ?: "Area")
+                threads += TimelineItem("thread", t.str("id"), t.str("title"), "", t.str("created_at"), areas[areaId] ?: "Area")
+            }
+        }
+
+        // neue Beiträge in abonnierten Threads als eigene Einträge
+        val myThreadSubs = db["thread_subscriptions"].select {
+            filter { eq("user_id", Supabase.client.auth.currentUserOrNull()?.id ?: "") }
+        }.decodeList<JsonObject>().map { it.str("thread_id") }
+        val threadComments = mutableListOf<TimelineItem>()
+        for (tid in myThreadSubs) {
+            db["post_comments"].select {
+                filter { eq("thread_id", tid) }
+                order("created_at", Order.DESCENDING)
+                limit(50)
+            }.decodeList<JsonObject>().forEach { c ->
+                val thread = threads.firstOrNull { it.id == tid }
+                threadComments += TimelineItem("comment", c.str("id"), thread?.title ?: "Thread", c.str("body"), c.str("created_at"), thread?.areaName ?: "")
             }
         }
 
         return (posts.map {
             TimelineItem("post", it.str("id"), it.str("title"), it.str("body"), it.str("created_at"), areas[it.str("area_id")] ?: "")
-        } + threads + messages.map {
+        } + threads + threadComments + messages.map {
             TimelineItem("message", it.str("id"), channelName[it.str("channel_id")] ?: "Chat", it.str("body"), it.str("created_at"), areas[channelArea[it.str("channel_id")]] ?: "Allgemein")
         } + events.map {
             TimelineItem("event", it.str("id"), "\ud83d\udcc5 ${it.str("title")}", it.str("start_time").take(16).replace('T', ' '), it.str("created_at"), "")
