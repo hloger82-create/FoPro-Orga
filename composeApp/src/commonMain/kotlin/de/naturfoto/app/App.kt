@@ -141,7 +141,10 @@ fun NaturfotoApp() {
                 )
             },
             bottomBar = {
-                NavigationBar {
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    tonalElevation = 0.dp,
+                ) {
                     Tab.entries.forEach { t ->
                         NavigationBarItem(
                             selected = tab == t,

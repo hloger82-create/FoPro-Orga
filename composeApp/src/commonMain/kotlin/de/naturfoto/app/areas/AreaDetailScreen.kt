@@ -231,15 +231,15 @@ private fun FeedList(
     var expanded by remember { mutableStateOf<String?>(null) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(feed, key = { it.str("kind") + it.str("id") }) { item ->
             val id = item.str("id")
             val isThread = item.str("kind") == "thread"
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 onClick = { if (isThread) onOpenThread(item) },
             ) {
@@ -371,7 +371,7 @@ private fun ThreadDetail(
         Text(thread.str("title"), style = MaterialTheme.typography.headlineSmall)
         androidx.compose.foundation.lazy.LazyColumn(
             modifier = Modifier.weight(1f).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
                 Card(

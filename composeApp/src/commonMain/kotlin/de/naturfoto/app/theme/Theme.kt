@@ -43,6 +43,13 @@ fun NaturfotoTheme(
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
         typography = MaterialTheme.typography,
+        shapes = androidx.compose.material3.Shapes(
+            extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+            small = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+            medium = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+            large = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+            extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(32.dp),
+        ),
         content = content,
     )
 }

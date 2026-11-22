@@ -63,7 +63,7 @@ fun AuthScreen(
                 .background(translucentSurface())
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(

@@ -102,7 +102,7 @@ fun ProfileScreen(
             .fillMaxSize()
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (loading) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))

@@ -53,7 +53,7 @@ fun ProjectPickerScreen(
     }
     LaunchedEffect(Unit) { load() }
 
-    Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Deine Projekte", style = MaterialTheme.typography.headlineSmall)
             TextButton(onClick = onLogout) { Text("Abmelden") }
