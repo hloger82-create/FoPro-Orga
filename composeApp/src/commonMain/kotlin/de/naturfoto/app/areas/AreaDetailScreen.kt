@@ -61,6 +61,7 @@ fun AreaDetailScreen(
 
     var forumId by remember { mutableStateOf<String?>(null) }
     var feed by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var readIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var isAdmin by remember { mutableStateOf(false) }
     var selectedThread by remember { mutableStateOf<JsonObject?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -139,11 +140,11 @@ fun AreaDetailScreen(
             if (selectedThread != null) {
                 ThreadDetail(thread = selectedThread!!, repo = repo, onBack = { selectedThread = null })
             } else {
-                FeedList(feed, repo = repo, isAdmin = isAdmin, onPin = { id, pin ->
+                FeedList(feed, repo = repo, isAdmin = isAdmin, readIds = readIds, onPin = { id, pin ->
                     scope.launch {
                         try { repo.pinThread(id, pin); loadFeed() } catch (e: Exception) { error = e.message }
                     }
-                }, onOpenThread = { selectedThread = it }, onDelete = { id ->
+                }, onOpenThread = { selectedThread = it; de.naturfoto.app.theme.ReadStoreHolder.markRead(it.str("id")); readIds = de.naturfoto.app.theme.ReadStoreHolder.readIds() }, onDelete = { id ->
                     scope.launch {
                         try { repo.deletePost(id); loadFeed() } catch (e: Exception) { error = e.message }
                     }
@@ -233,6 +234,7 @@ fun AreaDetailScreen(
 @Composable
 private fun FeedList(
     feed: List<JsonObject>,
+    readIds: Set<String> = emptySet(),
     repo: AreasRepository,
     isAdmin: Boolean,
     onPin: (String, Boolean) -> Unit,
@@ -258,7 +260,14 @@ private fun FeedList(
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text((if (isThread) "🧵 " else "📌 ") + item.str("title"), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            if (id !in readIds) {
+                                androidx.compose.foundation.layout.Box(
+                                    modifier = Modifier.size(8.dp).background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.CircleShape),
+                                )
+                            }
+                            Text((if (isThread) "🧵 " else "📌 ") + item.str("title"), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+                        }
                         if (item.bool("pinned")) Text("📌", style = MaterialTheme.typography.bodyMedium)
                     }
                     val body = item.str("body")
@@ -406,8 +415,16 @@ private fun ThreadDetail(
                     Text(thread.str("first_post"), modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyLarge)
                 }
             }
-            item { Text("Diskussion:", style = MaterialTheme.typography.titleSmall) }
-            item { CommentSection(repo = repo, threadId = thread.str("id")) }
+            item {
+                var discussionOpen by remember { mutableStateOf(true) }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Diskussion:", style = MaterialTheme.typography.titleSmall)
+                    TextButton(onClick = { discussionOpen = !discussionOpen }) {
+                        Text(if (discussionOpen) "▲ Zuklappen" else "▼ Aufklappen")
+                    }
+                }
+                if (discussionOpen) CommentSection(repo = repo, threadId = thread.str("id"))
+            }
         }
     }
 }

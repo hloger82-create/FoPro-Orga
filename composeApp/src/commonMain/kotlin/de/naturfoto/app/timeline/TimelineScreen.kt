@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TimelineScreen(
+    onOpenItem: (String, String) -> Unit = { _, _ -> },
     projectId: String,
     modifier: Modifier = Modifier,
 ) {

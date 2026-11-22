@@ -18,3 +18,17 @@ actual object ThemeModeStore {
         prefs().edit().putString(KEY_MODE, mode.name).apply()
     }
 }
+
+object ReadStore {
+    private fun prefs() = AppContextHolder.context.getSharedPreferences("naturfoto_reads", android.content.Context.MODE_PRIVATE)
+    fun readIds(): Set<String> = prefs().getStringSet("read", emptySet()) ?: emptySet()
+    fun markRead(id: String) {
+        val cur = readIds().toMutableSet()
+        if (cur.add(id)) prefs().edit().putStringSet("read", cur.takeLast(500).toSet()).apply()
+    }
+}
+
+actual object ReadStoreHolder {
+    actual fun readIds(): Set<String> = ReadStore.readIds()
+    actual fun markRead(id: String) = ReadStore.markRead(id)
+}

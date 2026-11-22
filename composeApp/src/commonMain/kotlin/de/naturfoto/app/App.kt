@@ -181,7 +181,14 @@ fun NaturfotoApp() {
                         tab = Tab.MAP
                     })
                     moreEntry == MoreEntry.PROFILE && pid != null -> ProfileScreen(projectId = pid, modifier = Modifier, onThemeModeChange = { themeMode = it })
-                    tab == Tab.TIMELINE && pid != null -> TimelineScreen(projectId = pid)
+                    tab == Tab.TIMELINE && pid != null -> TimelineScreen(projectId = pid, onOpenItem = { kind, _ ->
+                            when (kind) {
+                                "thread", "post" -> tab = Tab.AREAS
+                                "message" -> tab = Tab.CHAT
+                                "event" -> moreEntry = MoreEntry.CALENDAR
+                                else -> {}
+                            }
+                        })
                     tab == Tab.AREAS -> {
                         val area = selectedArea
                         if (area != null) {
