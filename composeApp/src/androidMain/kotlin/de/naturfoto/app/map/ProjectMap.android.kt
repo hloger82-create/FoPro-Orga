@@ -348,13 +348,24 @@ actual fun ProjectMap(
             }
         }
 
-        Row(
+        var fabsVisible by remember { mutableStateOf(true) }
+        val fabOffset by androidx.compose.animation.animateDpAsState(
+            targetValue = if (fabsVisible) 0.dp else 220.dp,
+            label = "fabs",
+        )
+        Column(
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.Bottom,
+                .align(Alignment.BottomEnd)
+                .offset(y = fabOffset)
+                .padding(16.dp)
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures { _, drag ->
+                        if (drag < -40) fabsVisible = false
+                        if (drag > 40) fabsVisible = true
+                    }
+                },
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (admin) {
                 MapFab(Icons.Default.EditLocation, "Gebiet bearbeiten", MaterialTheme.colorScheme.secondary) { editingRegion = true }

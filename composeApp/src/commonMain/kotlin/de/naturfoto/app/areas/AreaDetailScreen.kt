@@ -300,9 +300,17 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         comments.forEach { c ->
             val isReply = c.str("reply_to").isNotBlank()
+            androidx.compose.material3.Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = if (isReply) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
+                tonalElevation = 1.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = if (isReply) 24.dp else 0.dp),
+            ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
-                modifier = Modifier.padding(start = if (isReply) 20.dp else 0.dp),
+                modifier = Modifier.padding(12.dp),
             ) {
                 c.str("quoted_text").ifBlank { null }?.let {
                     Row(modifier = Modifier.fillMaxWidth()) {
@@ -327,6 +335,7 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
                     replyTo = c
                     input = ""
                 }) { Text("↩ Antworten", style = MaterialTheme.typography.labelSmall) }
+            }
             }
         }
         if (replyTo != null) {

@@ -73,8 +73,12 @@ fun ProjectPickerScreen(
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { showCreate = true }) { Text("Projekt erstellen") }
-            OutlinedButton(onClick = { showJoin = true }) { Text("Mit Code beitreten") }
+            androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxWidth(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = { showCreate = true }, modifier = Modifier.fillMaxWidth(0.8f)) { Text("Projekt erstellen") }
+                    OutlinedButton(onClick = { showJoin = true }, modifier = Modifier.fillMaxWidth(0.8f)) { Text("Mit Code beitreten") }
+                }
+            }
         }
     }
 
