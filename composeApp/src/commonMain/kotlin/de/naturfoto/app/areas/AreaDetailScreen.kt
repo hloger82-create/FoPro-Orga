@@ -59,6 +59,7 @@ fun AreaDetailScreen(
 
     var forumId by remember { mutableStateOf<String?>(null) }
     var feed by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
+    var isAdmin by remember { mutableStateOf(false) }
     var selectedThread by remember { mutableStateOf<JsonObject?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var showNewPost by remember { mutableStateOf(false) }
@@ -87,6 +88,8 @@ fun AreaDetailScreen(
         try {
             forumId = repo.forumForArea(areaId)
             subscribed = repo.isSubscribed(areaId)
+            val pid = repo.projectIdOfArea(areaId)
+            isAdmin = pid != null && repo.projectMembers(pid).any { it.str("user_id") == repo.userIdSafe && it.str("role") == "admin" }
             val names = repo.areaAndProjectNames(areaId)
             areaNameLocal = names.first
             projectName = names.second
