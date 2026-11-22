@@ -354,7 +354,7 @@ actual fun ProjectMap(
         }
 
         var fabsVisible by remember { mutableStateOf(true) }
-        val fabOffset by androidx.compose.animation.animateDpAsState(
+        val fabOffset by androidx.compose.animation.core.animateDpAsState(
             targetValue = if (fabsVisible) 0.dp else 220.dp,
             label = "fabs",
         )
