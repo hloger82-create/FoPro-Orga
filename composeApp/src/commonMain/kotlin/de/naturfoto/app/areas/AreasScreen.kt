@@ -90,6 +90,7 @@ fun AreasScreen(
                             .clickable { onOpenArea(area.str("id"), area.str("name")) },
                         shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text(area.str("name"), style = MaterialTheme.typography.titleMedium)

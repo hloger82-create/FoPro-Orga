@@ -55,12 +55,14 @@ fun TimelineScreen(
                     shape = RoundedCornerShape(24.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(
                                 when (item.kind) {
                                     "post" -> "📌 Beitrag"
+                                    "thread" -> "🧵 Thread"
                                     "message" -> "💬 Chat"
                                     else -> "📅 Termin"
                                 } + (if (item.areaName.isNotBlank()) " · ${item.areaName}" else ""),

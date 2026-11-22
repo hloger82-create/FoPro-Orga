@@ -256,7 +256,7 @@ private fun FeedList(
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text((if (isThread) "🧵 " else "📌 ") + item.str("title"), style = MaterialTheme.typography.titleMedium)
+                        Text((if (isThread) "🧵 " else "📌 ") + item.str("title"), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
                         if (item.bool("pinned")) Text("📌", style = MaterialTheme.typography.bodyMedium)
                     }
                     val body = item.str("body")
@@ -300,6 +300,7 @@ private fun FeedList(
 }
 
 @Composable
+@Composable
 private fun CommentSection(repo: AreasRepository, postId: String? = null, threadId: String? = null) {
     val scope = rememberCoroutineScope()
     var comments by remember { mutableStateOf<List<JsonObject>>(emptyList()) }
@@ -311,45 +312,14 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
         comments = repo.listComments(postId = postId, threadId = threadId)
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        comments.forEach { c ->
-            val isReply = c.str("reply_to").isNotBlank()
-            androidx.compose.material3.Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = if (isReply) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
-                tonalElevation = 1.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = if (isReply) 24.dp else 0.dp),
-            ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-                modifier = Modifier.padding(12.dp),
-            ) {
-                c.str("quoted_text").ifBlank { null }?.let {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        androidx.compose.foundation.layout.Box(
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                                .fillMaxHeight()
-                                .width(3.dp)
-                                .background(MaterialTheme.colorScheme.secondary, RoundedCornerShape(2.dp)),
-                        )
-                        Text(
-                            "❝ $it",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary,
-                            maxLines = 2,
-                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        )
-                    }
-                }
-                Text(c.str("body"), style = MaterialTheme.typography.bodyMedium)
-                TextButton(onClick = {
-                    replyTo = c
-                    input = ""
-                }) { Text("↩ Antworten", style = MaterialTheme.typography.labelSmall) }
-            }
+    val topLevel = comments.filter { it.str("reply_to").isBlank() }
+    val repliesByParent = comments.filter { it.str("reply_to").isNotBlank() }.groupBy { it.str("reply_to") }
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        topLevel.forEach { c ->
+            CommentItem(c, isReply = false, onReply = { replyTo = c; input = "" })
+            (repliesByParent[c.str("id")] ?: emptyList()).forEach { r ->
+                CommentItem(r, isReply = true, onReply = { replyTo = r; input = "" })
             }
         }
         if (replyTo != null) {
@@ -358,39 +328,28 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Text(
-                        "Antwort auf: ❝ ${replyTo!!.str("body")}",
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(onClick = { replyTo = null; input = "" }) { Text("✕") }
+                    Text("Antwort auf: \u275d ${replyTo!!.str("body")}", maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    TextButton(onClick = { replyTo = null }) { Text("✕") }
                 }
             }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = input,
                 onValueChange = { input = it },
+                label = { Text("Kommentar") },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Kommentar…") },
-                minLines = 2,
-                maxLines = 5,
             )
-            TextButton(
+            Button(
                 enabled = input.isNotBlank(),
                 onClick = {
                     scope.launch {
-                        repo.addComment(
-                            postId = postId,
-                            threadId = threadId,
-                            body = input.trim(),
-                            replyTo = replyTo?.str("id"),
-                            quotedText = replyTo?.str("body"),
-                        )
-                        input = ""
-                        replyTo = null
-                        comments = repo.listComments(postId = postId, threadId = threadId)
+                        try {
+                            repo.addComment(postId = postId, threadId = threadId, body = input.trim(), replyTo = replyTo?.str("id"))
+                            input = ""
+                            replyTo = null
+                            comments = repo.listComments(postId = postId, threadId = threadId)
+                        } catch (e: Exception) { }
                     }
                 },
             ) { Text("Senden") }
@@ -398,8 +357,31 @@ private fun CommentSection(repo: AreasRepository, postId: String? = null, thread
     }
 }
 
-
 @Composable
+private fun CommentItem(c: JsonObject, isReply: Boolean, onReply: () -> Unit) {
+    androidx.compose.material3.Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = if (isReply) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = if (isReply) 24.dp else 0.dp),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.padding(12.dp)) {
+            c.str("quoted_text").ifBlank { null }?.let {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier.padding(end = 8.dp).fillMaxHeight().width(3.dp)
+                            .background(MaterialTheme.colorScheme.secondary, RoundedCornerShape(2.dp)),
+                    )
+                    Text("\u275d $it", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                }
+            }
+            Text(c.str("body"), style = MaterialTheme.typography.bodyMedium)
+            TextButton(onClick = onReply) { Text("\u21a9 Antworten", style = MaterialTheme.typography.labelSmall) }
+        }
+    }
+}
 private fun ThreadDetail(
     thread: JsonObject,
     repo: AreasRepository,
@@ -416,6 +398,7 @@ private fun ThreadDetail(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                 ) {
                     Text(thread.str("first_post"), modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyLarge)
                 }

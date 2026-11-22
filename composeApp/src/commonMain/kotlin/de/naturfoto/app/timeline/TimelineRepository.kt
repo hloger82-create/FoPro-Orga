@@ -67,6 +67,17 @@ class TimelineRepository {
         return (posts.map {
             TimelineItem("post", it.str("id"), it.str("title"), it.str("body"), it.str("created_at"), areas[it.str("area_id")] ?: "")
         } + messages.map {
+            // Threads aus abonnierten Areas
+            for (areaId in areaIds) {
+                val forum = db["forums"].select { filter { eq("area_id", areaId) } }.decodeList<JsonObject>().firstOrNull() ?: continue
+                db["threads"].select {
+                    filter { eq("forum_id", forum.str("id")) }
+                    order("created_at", Order.DESCENDING)
+                    limit(50)
+                }.decodeList<JsonObject>().forEach { t ->
+                    items += TimelineItem("thread", t.str("id"), forum.str("name"), t.str("title"), t.str("created_at"), areas[areaId] ?: "Area")
+                }
+            }
             TimelineItem("message", it.str("id"), channelName[it.str("channel_id")] ?: "Chat", it.str("body"), it.str("created_at"), areas[channelArea[it.str("channel_id")]] ?: "Allgemein")
         } + events.map {
             TimelineItem("event", it.str("id"), "📅 ${it.str("title")}", it.str("start_time").take(16).replace('T', ' '), it.str("created_at"), "")

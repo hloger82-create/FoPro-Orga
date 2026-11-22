@@ -118,6 +118,7 @@ fun ChatScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(msg.str("body"), style = MaterialTheme.typography.bodyLarge)

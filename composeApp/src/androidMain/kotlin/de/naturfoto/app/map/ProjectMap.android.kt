@@ -573,16 +573,21 @@ private fun MapFab(
     color: Color,
     onClick: () -> Unit,
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        FloatingActionButton(onClick = onClick, containerColor = translucentSurface(), contentColor = color) {
-            Icon(icon, contentDescription = label)
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp), modifier = Modifier.width(64.dp)) {
+        FloatingActionButton(
+            onClick = onClick,
+            containerColor = translucentSurface(0.55f),
+            contentColor = color,
+            modifier = Modifier.size(44.dp),
+        ) {
+            Icon(icon, contentDescription = label, modifier = Modifier.size(20.dp))
         }
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
-            modifier = Modifier
+            modifier = Modifier.fillMaxWidth(),
                 .height(18.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(translucentSurface(0.6f))
