@@ -269,7 +269,7 @@ actual fun ProjectMap(
                     // Attribution / ScaleBar / Zoom-Overlays ausblenden
                     overlays.removeAll {
                         it is org.osmdroid.views.overlay.CopyrightOverlay ||
-                        it is org.osmdroid.views.overlay.ScaleBarOverlay ||
+                        it is org.osmdroid.views.overlay.ScaleBarOverlay
                     }
                     controller.setZoom(6.0)
                     controller.setCenter(GeoPoint(51.1657, 10.4515))
