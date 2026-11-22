@@ -266,6 +266,12 @@ actual fun ProjectMap(
                 MapView(ctx).apply {
                     setTileSource(TileSourceFactory.MAPNIK)
                     setMultiTouchControls(true)
+                    // Attribution / ScaleBar / Zoom-Overlays ausblenden
+                    overlays.removeAll {
+                        it is org.osmdroid.views.overlay.CopyrightOverlay ||
+                        it is org.osmdroid.views.overlay.ScaleBarOverlay ||
+                        it is org.osmdroid.views.overlay.zoom.ZoomOverlay
+                    }
                     controller.setZoom(6.0)
                     controller.setCenter(GeoPoint(51.1657, 10.4515))
                     locOverlay = org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay(
