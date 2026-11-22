@@ -14,6 +14,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
@@ -52,7 +54,7 @@ fun TimelineScreen(
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             androidx.compose.material3.IconButton(onClick = { scope.launch { load() } }) {
-                Icon(androidx.compose.material.icons.filled.Refresh, contentDescription = "Aktualisieren")
+                Icon(Icons.Filled.Refresh, contentDescription = "Aktualisieren")
             }
         }
         DisposableEffect(projectId) {
