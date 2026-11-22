@@ -229,6 +229,7 @@ private fun FeedList(
     onDelete: (String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf<String?>(null) }
+    var collapsedPosts by remember { mutableStateOf<Set<String>>(emptySet()) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 20.dp),
@@ -241,6 +242,7 @@ private fun FeedList(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                 onClick = { if (isThread) onOpenThread(item) },
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -248,7 +250,21 @@ private fun FeedList(
                         Text((if (isThread) "🧵 " else "📌 ") + item.str("title"), style = MaterialTheme.typography.titleMedium)
                         if (item.bool("pinned")) Text("📌", style = MaterialTheme.typography.bodyMedium)
                     }
-                    item.str("body").let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                    val body = item.str("body")
+                    val expandedBody = collapsedPosts.contains(id)
+                    if (body.length > 240 && !expandedBody) {
+                        Text(body.take(240) + " …", style = MaterialTheme.typography.bodyMedium)
+                        TextButton(onClick = { collapsedPosts = collapsedPosts - id }) {
+                            Text("▼ Mehr anzeigen")
+                        }
+                    } else {
+                        Text(body, style = MaterialTheme.typography.bodyMedium)
+                        if (body.length > 240) {
+                            TextButton(onClick = { collapsedPosts = collapsedPosts + id }) {
+                                Text("▲ Weniger anzeigen")
+                            }
+                        }
+                    }
                     Text(
                         if (isThread) "Thread — tippen zum Öffnen" else "Beitrag · ${item.str("audience")}",
                         style = MaterialTheme.typography.labelSmall,
