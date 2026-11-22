@@ -228,38 +228,6 @@ actual fun ProjectMap(
         },
     ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        // rechter Rand: Swipe blendet Karten-Buttons ein/aus
-        var fabDragTotal by remember { mutableStateOf(0f) }
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .width(28.dp)
-                .fillMaxHeight()
-                .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragEnd = {
-                            if (fabDragTotal < -60) fabsVisible = false
-                            else if (fabDragTotal > 60) fabsVisible = true
-                            fabDragTotal = 0f
-                        },
-                    ) { _, drag -> fabDragTotal += drag.y }
-                },
-        )
-        // linker Rand: Swipe öffnet den Spot-Filter
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .width(28.dp)
-                .fillMaxHeight()
-                .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragEnd = {
-                            if (drawerDragTotal > 60) scope.launch { drawerState.open() }
-                            drawerDragTotal = 0f
-                        },
-                    ) { _, drag -> drawerDragTotal += drag.x }
-                },
-        )
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { ctx ->
@@ -394,6 +362,38 @@ actual fun ProjectMap(
                 Icon(Icons.Default.Menu, contentDescription = "Filter öffnen", tint = MaterialTheme.colorScheme.onSurface)
             }
         }
+        // rechter Rand: Swipe blendet Karten-Buttons ein/aus
+        var fabDragTotal by remember { mutableStateOf(0f) }
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .width(28.dp)
+                .fillMaxHeight()
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragEnd = {
+                            if (fabDragTotal < -60) fabsVisible = false
+                            else if (fabDragTotal > 60) fabsVisible = true
+                            fabDragTotal = 0f
+                        },
+                    ) { _, drag -> fabDragTotal += drag.y }
+                },
+        )
+        // linker Rand: Swipe öffnet den Spot-Filter
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .width(28.dp)
+                .fillMaxHeight()
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragEnd = {
+                            if (drawerDragTotal > 60) scope.launch { drawerState.open() }
+                            drawerDragTotal = 0f
+                        },
+                    ) { _, drag -> drawerDragTotal += drag.x }
+                },
+        )
         val fabOffset by androidx.compose.animation.core.animateDpAsState(
             targetValue = if (fabsVisible) 0.dp else 220.dp,
             animationSpec = androidx.compose.animation.core.spring(
