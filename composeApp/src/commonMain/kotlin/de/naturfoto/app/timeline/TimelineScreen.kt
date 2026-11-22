@@ -14,7 +14,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,13 +37,16 @@ fun TimelineScreen(
     var items by remember { mutableStateOf<List<TimelineItem>>(emptyList()) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(projectId) {
-        try {
-            items = repo.load(projectId)
-        } catch (e: Exception) {
-            error = e.message
+    fun load() {
+        scope.launch {
+            try {
+                items = repo.load(projectId)
+            } catch (e: Exception) {
+                error = e.message
+            }
         }
     }
+    LaunchedEffect(projectId) { load() }
 
     Column(modifier = modifier.fillMaxSize()) {
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
