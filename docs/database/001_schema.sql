@@ -144,6 +144,7 @@ create table if not exists public.threads (
     title text not null,
     first_post text not null default '',
     created_by uuid not null references public.profiles(id),
+    pinned boolean not null default false,
     created_at timestamptz not null default now()
 );
 

@@ -7,7 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.exifinterface.media.ExifInterface
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.input.pointer.pointerInput
@@ -356,6 +356,10 @@ actual fun ProjectMap(
         var fabsVisible by remember { mutableStateOf(true) }
         val fabOffset by androidx.compose.animation.core.animateDpAsState(
             targetValue = if (fabsVisible) 0.dp else 220.dp,
+            animationSpec = androidx.compose.animation.core.spring(
+                dampingRatio = 0.8f,
+                stiffness = 400f,
+            ),
             label = "fabs",
         )
         Column(
@@ -364,10 +368,10 @@ actual fun ProjectMap(
                 .offset(y = fabOffset)
                 .padding(16.dp)
                 .pointerInput(Unit) {
-                    detectVerticalDragGestures { _, drag ->
-                        if (drag < -40) fabsVisible = false
-                        if (drag > 40) fabsVisible = true
-                    }
+                    var total = 0f
+                    detectDragGestures(
+                        onDragEnd = { if (total < -60) fabsVisible = false else if (total > 60) fabsVisible = true; total = 0f },
+                    ) { _, drag -> total += drag.y }
                 },
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(12.dp),

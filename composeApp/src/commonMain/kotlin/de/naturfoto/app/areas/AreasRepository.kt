@@ -137,7 +137,10 @@ class AreasRepository {
                 put("area_id", kotlinx.serialization.json.JsonPrimitive(areaId))
             })
         }
-        return (posts + threads).sortedByDescending { str2(it, "created_at") }
+        return (posts + threads).sortedWith(
+            compareByDescending<kotlinx.serialization.json.JsonObject> { it.bool("pinned") }
+                .thenByDescending { str2(it, "created_at") }
+        )
     }
 
     private fun str2(o: kotlinx.serialization.json.JsonObject, k: String): String =
@@ -148,6 +151,12 @@ class AreasRepository {
             filter { eq("forum_id", forumId) }
             order("created_at", Order.DESCENDING)
         }.decodeList<kotlinx.serialization.json.JsonObject>()
+
+    suspend fun pinThread(threadId: String, pinned: Boolean) {
+        db["threads"].update({ set("pinned", pinned) }) {
+            filter { eq("id", threadId) }
+        }
+    }
 
     suspend fun createThread(forumId: String, title: String, firstPost: String) {
         db["threads"].insert(

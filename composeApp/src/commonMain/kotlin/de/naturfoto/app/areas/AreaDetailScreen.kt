@@ -100,7 +100,7 @@ fun AreaDetailScreen(
         modifier = modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                showNewPost = true
+                showNewThread = true
             }) {
                 Icon(Icons.Default.Add, contentDescription = "Neu")
             }
@@ -134,7 +134,11 @@ fun AreaDetailScreen(
             if (selectedThread != null) {
                 ThreadDetail(thread = selectedThread!!, repo = repo, onBack = { selectedThread = null })
             } else {
-                FeedList(feed, repo = repo, onOpenThread = { selectedThread = it }, onDelete = { id ->
+                FeedList(feed, repo = repo, isAdmin = isAdmin, onPin = { id, pin ->
+                    scope.launch {
+                        try { repo.pinThread(id, pin); loadFeed() } catch (e: Exception) { error = e.message }
+                    }
+                }, onOpenThread = { selectedThread = it }, onDelete = { id ->
                     scope.launch {
                         try { repo.deletePost(id); loadFeed() } catch (e: Exception) { error = e.message }
                     }
@@ -225,6 +229,8 @@ fun AreaDetailScreen(
 private fun FeedList(
     feed: List<JsonObject>,
     repo: AreasRepository,
+    isAdmin: Boolean,
+    onPin: (String, Boolean) -> Unit,
     onOpenThread: (JsonObject) -> Unit,
     onDelete: (String) -> Unit,
 ) {
@@ -270,6 +276,11 @@ private fun FeedList(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.secondary,
                     )
+                    if (isThread && isAdmin) {
+                        TextButton(onClick = { onPin(id, !item.bool("pinned")) }) {
+                            Text(if (item.bool("pinned")) "📌 Lospinnen" else "📌 Anpinnen")
+                        }
+                    }
                     if (!isThread) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(onClick = { expanded = if (expanded == id) null else id }) {
