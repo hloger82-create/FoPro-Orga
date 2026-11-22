@@ -52,7 +52,7 @@ fun TimelineScreen(
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             androidx.compose.material3.IconButton(onClick = { scope.launch { load() } }) {
-                Icon(androidx.compose.material.icons.Icons.Default.Refresh, contentDescription = "Aktualisieren")
+                Icon(androidx.compose.material.icons.filled.Refresh, contentDescription = "Aktualisieren")
             }
         }
         DisposableEffect(projectId) {
