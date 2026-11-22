@@ -24,7 +24,7 @@ object ReadStore {
     fun readIds(): Set<String> = prefs().getStringSet("read", null) ?: emptySet()
     fun markRead(id: String) {
         val cur = readIds().toMutableSet()
-        if (cur.add(id)) prefs().edit().putStringSet("read", cur.takeLast(500).toSet()).apply()
+        if (cur.add(id)) prefs().edit().putStringSet("read", cur.toList().takeLast(500).toSet()).apply()
     }
 }
 
