@@ -382,7 +382,9 @@ private fun CommentItem(c: JsonObject, isReply: Boolean, onReply: () -> Unit) {
             TextButton(onClick = onReply) { Text("\u21a9 Antworten", style = MaterialTheme.typography.labelSmall) }
         }
     }
-}
+} 
+
+@Composable
 private fun ThreadDetail(
     thread: JsonObject,
     repo: AreasRepository,
