@@ -16,7 +16,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -299,7 +301,6 @@ private fun FeedList(
     }
 }
 
-@Composable
 @Composable
 private fun CommentSection(repo: AreasRepository, postId: String? = null, threadId: String? = null) {
     val scope = rememberCoroutineScope()
