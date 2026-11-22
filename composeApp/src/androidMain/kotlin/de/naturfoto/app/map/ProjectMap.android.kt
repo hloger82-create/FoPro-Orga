@@ -270,7 +270,7 @@ actual fun ProjectMap(
                     overlays.removeAll {
                         it is org.osmdroid.views.overlay.CopyrightOverlay ||
                         it is org.osmdroid.views.overlay.ScaleBarOverlay ||
-                        it is org.osmdroid.views.overlay.zoom.ZoomOverlay
+                        it is org.osmdroid.views.overlay.ZoomOverlay
                     }
                     controller.setZoom(6.0)
                     controller.setCenter(GeoPoint(51.1657, 10.4515))
