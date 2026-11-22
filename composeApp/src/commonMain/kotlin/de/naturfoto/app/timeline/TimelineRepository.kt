@@ -72,7 +72,7 @@ class TimelineRepository {
                 order("created_at", Order.DESCENDING)
                 limit(50)
             }.decodeList<JsonObject>().forEach { t ->
-                threads += TimelineItem("thread", t.str("id"), forum.str("name"), t.str("title"), t.str("created_at"), areas[areaId] ?: "Area")
+                threads += TimelineItem("thread", t.str("id"), t.str("title"), t.str("first_post").ifBlank { "" }, t.str("created_at"), areas[areaId] ?: "Area")
             }
         }
 
