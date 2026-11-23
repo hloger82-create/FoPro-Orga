@@ -217,7 +217,7 @@ actual fun ProjectMap(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Text("Spots anzeigen", style = MaterialTheme.typography.titleMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f))
                         androidx.compose.material3.IconButton(onClick = { scope.launch { drawerState.close() } }) {
-                            Icon(androidx.compose.material.icons.filled.Close, contentDescription = "Schließen")
+                            Icon(Icons.Filled.Close, contentDescription = "Schließen")
                         }
                     }
                     FilterRow("Alle", showAll) { showAll = it }
