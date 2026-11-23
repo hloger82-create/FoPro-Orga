@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TimelineScreen(
-    onOpenItem: (String, String) -> Unit = { _, _ -> },
+    onOpenItem: (String, String, String) -> Unit = { _, _, _ -> },
     projectId: String,
     modifier: Modifier = Modifier,
 ) {
@@ -70,7 +70,7 @@ fun TimelineScreen(
             items(items, key = { "${it.kind}-${it.id}" }) { item ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { onOpenItem(item.kind, item.id) },
+                    onClick = { onOpenItem(item.kind, item.id, item.areaId) },
                     shape = RoundedCornerShape(24.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),

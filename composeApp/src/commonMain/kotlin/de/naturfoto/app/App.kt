@@ -182,9 +182,18 @@ fun NaturfotoApp() {
                         tab = Tab.MAP
                     })
                     moreEntry == MoreEntry.PROFILE && pid != null -> ProfileScreen(projectId = pid, modifier = Modifier, onThemeModeChange = { themeMode = it })
-                    tab == Tab.TIMELINE && pid != null -> TimelineScreen(projectId = pid, onOpenItem = { kind, id ->
+                    tab == Tab.TIMELINE && pid != null -> TimelineScreen(projectId = pid, onOpenItem = { kind, id, areaId ->
                             when (kind) {
-                                "thread", "post", "comment" -> { tab = Tab.AREAS; pendingTimelineTarget = id }
+                                "thread", "post", "comment" -> {
+                                    tab = Tab.AREAS
+                                    pendingTimelineTarget = id
+                                    if (areaId.isNotBlank()) {
+                                        scope.launch {
+                                            val name = de.naturfoto.app.areas.AreasRepository().listAreas(pid).firstOrNull { it.str("id") == areaId }?.str("name") ?: "Area"
+                                            selectedArea = areaId to name
+                                        }
+                                    }
+                                }
                                 "message" -> tab = Tab.CHAT
                                 "event" -> { moreEntry = MoreEntry.CALENDAR; pendingTimelineTarget = id }
                                 else -> {}
