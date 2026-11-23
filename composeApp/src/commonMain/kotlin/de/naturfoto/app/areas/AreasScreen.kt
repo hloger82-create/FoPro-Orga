@@ -80,7 +80,7 @@ fun AreasScreen(
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 items(areas, key = { it.str("id") }) { area ->

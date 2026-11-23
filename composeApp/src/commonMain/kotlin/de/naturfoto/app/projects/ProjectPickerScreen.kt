@@ -56,7 +56,7 @@ fun ProjectPickerScreen(
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Deine Projekte", style = MaterialTheme.typography.headlineSmall)
+            Text("Deine Projekte", style = MaterialTheme.typography.headlineSmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth())
             TextButton(onClick = onLogout) { Text("Abmelden") }
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }

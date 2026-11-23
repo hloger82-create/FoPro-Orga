@@ -96,7 +96,7 @@ fun NaturfotoApp() {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text("Bitte bestätige deine E-Mail-Adresse", style = MaterialTheme.typography.headlineSmall)
+                Text("Bitte bestätige deine E-Mail-Adresse", style = MaterialTheme.typography.headlineSmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 Text("Wir haben dir eine Bestätigungs-Mail geschickt. Danach hier neu anmelden.", style = MaterialTheme.typography.bodyMedium)
                 androidx.compose.material3.OutlinedButton(onClick = {
                     scope.launch { AuthRepository().signOut() }
@@ -202,7 +202,7 @@ fun NaturfotoApp() {
                     tab == Tab.MAP && pid != null -> ProjectMap(projectId = pid, focus = mapFocus, onFocusConsumed = { mapFocus = null }, modifier = Modifier)
                     tab == Tab.MORE -> {
                         Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Mehr", style = MaterialTheme.typography.headlineSmall)
+                            Text("Mehr", style = MaterialTheme.typography.headlineSmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth())
                             MoreEntry.entries.forEach { e ->
                                 androidx.compose.material3.OutlinedButton(
                                     onClick = { moreEntry = e },

@@ -246,7 +246,7 @@ private fun FeedList(
     var collapsedPosts by remember { mutableStateOf<Set<String>>(emptySet()) }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(feed, key = { it.str("kind") + it.str("id") }) { item ->

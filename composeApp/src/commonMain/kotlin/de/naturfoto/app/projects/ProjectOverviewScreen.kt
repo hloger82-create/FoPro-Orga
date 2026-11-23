@@ -71,7 +71,7 @@ fun ProjectOverviewScreen(
 
     Column(modifier = modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Projektübersicht", style = MaterialTheme.typography.headlineSmall)
+            Text("Projektübersicht", style = MaterialTheme.typography.headlineSmall, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth())
             TextButton(onClick = onClose) { Text("Schließen") }
         }
         error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
