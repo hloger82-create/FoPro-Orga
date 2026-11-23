@@ -213,7 +213,12 @@ actual fun ProjectMap(
         drawerContent = {
             androidx.compose.material3.ModalDrawerSheet(modifier = Modifier.width(280.dp)) {
                 Column(modifier = Modifier.padding(16.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Spots anzeigen", style = MaterialTheme.typography.titleMedium)
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text("Spots anzeigen", style = MaterialTheme.typography.titleMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f))
+                        androidx.compose.material3.IconButton(onClick = { scope.launch { drawerState.close() } }) {
+                            Icon(androidx.compose.material.icons.Icons.Filled.Close, contentDescription = "Schließen")
+                        }
+                    }
                     FilterRow("Alle", showAll) { showAll = it }
                     areas.forEach { a ->
                         FilterRow(a.str("name"), showAll || a.str("id") !in hiddenAreas) { on ->
@@ -367,7 +372,7 @@ actual fun ProjectMap(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .width(28.dp)
+                .width(44.dp)
                 .fillMaxHeight()
                 .pointerInput(Unit) {
                     detectDragGestures(

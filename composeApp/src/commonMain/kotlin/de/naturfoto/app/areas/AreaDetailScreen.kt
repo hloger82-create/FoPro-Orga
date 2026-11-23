@@ -52,6 +52,7 @@ import kotlinx.serialization.json.JsonObject
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun AreaDetailScreen(
+    openThreadId: String? = null,
     areaId: String,
     areaName: String,
     onBack: () -> Unit,

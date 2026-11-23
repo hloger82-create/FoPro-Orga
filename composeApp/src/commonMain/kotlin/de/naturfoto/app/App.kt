@@ -174,7 +174,7 @@ fun NaturfotoApp() {
                 }
                 val pid = projectId
                 when {
-                    moreEntry == MoreEntry.CALENDAR && pid != null -> CalendarScreen(projectId = pid, defaultAreaId = selectedArea?.first)
+                    moreEntry == MoreEntry.CALENDAR && pid != null -> CalendarScreen(projectId = pid, defaultAreaId = selectedArea?.first, openEventId = pendingTimelineTarget, onNavigateBack = { moreEntry = null })
                     moreEntry == MoreEntry.SURVEYS && pid != null -> SurveysScreen(projectId = pid, defaultAreaId = selectedArea?.first)
                     moreEntry == MoreEntry.EBIRD && pid != null -> EBirdScreen(projectId = pid, onOpenOnMap = { lat, lng ->
                         mapFocus = lat to lng
@@ -193,7 +193,7 @@ fun NaturfotoApp() {
                     tab == Tab.AREAS -> {
                         val area = selectedArea
                         if (area != null) {
-                            AreaDetailScreen(areaId = area.first, areaName = area.second, onBack = { selectedArea = null })
+                            AreaDetailScreen(areaId = area.first, areaName = area.second, openThreadId = pendingTimelineTarget, onBack = { selectedArea = null; pendingTimelineTarget = null })
                         } else if (pid != null) {
                             AreasScreen(projectId = pid, onOpenArea = { id, name -> selectedArea = id to name })
                         }

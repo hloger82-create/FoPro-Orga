@@ -41,6 +41,8 @@ import kotlinx.serialization.json.JsonObject
 
 @Composable
 fun CalendarScreen(
+    openEventId: String? = null,
+    onNavigateBack: () -> Unit = {},
     defaultAreaId: String? = null,
     projectId: String,
     modifier: Modifier = Modifier,
