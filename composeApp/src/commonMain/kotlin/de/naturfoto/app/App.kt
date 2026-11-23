@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import de.naturfoto.app.areas.AreaDetailScreen
+import de.naturfoto.app.data.str
 import de.naturfoto.app.areas.AreasScreen
 import de.naturfoto.app.auth.AuthRepository
 import kotlinx.coroutines.launch
