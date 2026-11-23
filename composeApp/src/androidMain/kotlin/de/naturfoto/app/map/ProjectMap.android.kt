@@ -27,6 +27,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.AddLocationAlt
 import androidx.compose.material.icons.filled.EditLocation
 import androidx.compose.material.icons.filled.Layers
@@ -216,7 +217,7 @@ actual fun ProjectMap(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Text("Spots anzeigen", style = MaterialTheme.typography.titleMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f))
                         androidx.compose.material3.IconButton(onClick = { scope.launch { drawerState.close() } }) {
-                            Icon(androidx.compose.material.icons.Icons.Filled.Close, contentDescription = "Schließen")
+                            Icon(androidx.compose.material.icons.filled.Close, contentDescription = "Schließen")
                         }
                     }
                     FilterRow("Alle", showAll) { showAll = it }
