@@ -15,6 +15,7 @@ data class TimelineItem(
     val body: String,
     val createdAt: String,
     val areaName: String,
+    val areaId: String = "",
 )
 
 class TimelineRepository {
@@ -72,7 +73,7 @@ class TimelineRepository {
                 order("created_at", Order.DESCENDING)
                 limit(50)
             }.decodeList<JsonObject>().forEach { t ->
-                threads += TimelineItem("thread", t.str("id"), t.str("title"), "", t.str("created_at"), areas[areaId] ?: "Area")
+                threads += TimelineItem("thread", t.str("id"), t.str("title"), "", t.str("created_at"), areas[areaId] ?: "Area", areaId)
             }
         }
 
@@ -93,7 +94,7 @@ class TimelineRepository {
         }
 
         return (posts.map {
-            TimelineItem("post", it.str("id"), it.str("title"), it.str("body"), it.str("created_at"), areas[it.str("area_id")] ?: "")
+            TimelineItem("post", it.str("id"), it.str("title"), it.str("body"), it.str("created_at"), areas[it.str("area_id")] ?: "", it.str("area_id"))
         } + threads + threadComments + messages.map {
             TimelineItem("message", it.str("id"), channelName[it.str("channel_id")] ?: "Chat", it.str("body"), it.str("created_at"), areas[channelArea[it.str("channel_id")]] ?: "Allgemein")
         } + events.map {

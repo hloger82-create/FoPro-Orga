@@ -82,6 +82,7 @@ fun NaturfotoApp() {
         }
         var tab by remember { mutableStateOf(Tab.TIMELINE) }
         var moreEntry by remember { mutableStateOf<MoreEntry?>(null) }
+    var pendingTimelineTarget by remember { mutableStateOf<String?>(null) }
         var projectId by remember { mutableStateOf<String?>(null) }
         var projectName by remember { mutableStateOf("") }
         var mapFocus by remember { mutableStateOf<Pair<Double, Double>?>(null) }
@@ -181,11 +182,11 @@ fun NaturfotoApp() {
                         tab = Tab.MAP
                     })
                     moreEntry == MoreEntry.PROFILE && pid != null -> ProfileScreen(projectId = pid, modifier = Modifier, onThemeModeChange = { themeMode = it })
-                    tab == Tab.TIMELINE && pid != null -> TimelineScreen(projectId = pid, onOpenItem = { kind, _ ->
+                    tab == Tab.TIMELINE && pid != null -> TimelineScreen(projectId = pid, onOpenItem = { kind, id ->
                             when (kind) {
-                                "thread", "post" -> tab = Tab.AREAS
+                                "thread", "post", "comment" -> { tab = Tab.AREAS; pendingTimelineTarget = id }
                                 "message" -> tab = Tab.CHAT
-                                "event" -> moreEntry = MoreEntry.CALENDAR
+                                "event" -> { moreEntry = MoreEntry.CALENDAR; pendingTimelineTarget = id }
                                 else -> {}
                             }
                         })

@@ -74,7 +74,7 @@ fun TimelineScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(
                                 when (item.kind) {
@@ -89,8 +89,17 @@ fun TimelineScreen(
                             )
                             Text(item.createdAt.take(16).replace('T', ' '), style = MaterialTheme.typography.labelSmall)
                         }
-                        Text(item.title, style = MaterialTheme.typography.titleMedium)
-                        if (item.body.isNotBlank()) Text(item.body, style = MaterialTheme.typography.bodyMedium)
+                        Text(item.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        if (item.body.isNotBlank()) {
+                            var bodyOpen by remember { mutableStateOf(false) }
+                            if (item.body.length > 160 && !bodyOpen) {
+                                Text(item.body.take(160) + " …", style = MaterialTheme.typography.bodyMedium)
+                                TextButton(onClick = { bodyOpen = true }) { Text("▼ Mehr") }
+                            } else {
+                                Text(item.body, style = MaterialTheme.typography.bodyMedium)
+                                if (item.body.length > 160) TextButton(onClick = { bodyOpen = false }) { Text("▲ Weniger") }
+                            }
+                        }
                     }
                 }
             }
